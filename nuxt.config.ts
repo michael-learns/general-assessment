@@ -10,7 +10,8 @@ export default defineNuxtConfig({
     codeAliveApiKey: '',
     assessmentWebhookUrl: '',
     public: {
-      convexUrl: ''
+      convexUrl: '',
+      demoBookingUrl: 'https://calendly.com'
     }
   },
   nitro: {

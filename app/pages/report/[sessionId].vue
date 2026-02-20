@@ -20,6 +20,7 @@ interface AssessmentData {
 
 const route = useRoute()
 const sessionId = route.params.sessionId as string
+const config = useRuntimeConfig()
 
 const { data, pending, error } = await useFetch<AssessmentData>(`/api/assessment/${sessionId}`)
 
@@ -166,7 +167,12 @@ function downloadReport() {
         <UButton icon="i-lucide-printer" variant="outline" color="neutral" @click="downloadReport">
           Download PDF
         </UButton>
-        <UButton icon="i-lucide-calendar">
+        <UButton
+          icon="i-lucide-calendar"
+          :to="config.public.demoBookingUrl || 'https://calendly.com'"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           Book a Demo
         </UButton>
       </div>

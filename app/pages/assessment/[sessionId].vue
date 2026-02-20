@@ -91,6 +91,23 @@ async function finalizeAssessment(lastMessage: string) {
 
 // Start the conversation automatically when no messages yet
 onMounted(async () => {
+  // Restore session data if state was lost (e.g. page refresh or direct link)
+  if (!companyName.value) {
+    try {
+      const session = await $fetch<{ companyName: string; industry: string } | null>(
+        `/api/sessions/${sessionId}`
+      )
+      if (session) {
+        companyName.value = session.companyName
+        industry.value = session.industry
+      }
+    } catch {
+      // Session not found — redirect to landing
+      await navigateTo('/')
+      return
+    }
+  }
+
   if (messages.value.length === 0 && companyName.value) {
     await sendMessage(`Hi! I'm from ${companyName.value}, a ${industry.value} company. I'd like to start the assessment.`)
   }
