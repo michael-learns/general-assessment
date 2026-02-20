@@ -1,16 +1,53 @@
-// TEMPORARY BOOTSTRAP STUB - will be overwritten by `bunx convex dev`
-// Do not rely on these types as authoritative - run Convex dev to generate real types
 /* eslint-disable */
 /**
- * Generated API stub - run `bunx convex dev` to regenerate
+ * Generated `api` utility.
+ *
+ * THIS CODE IS AUTOMATICALLY GENERATED.
+ *
+ * To regenerate, run `npx convex dev`.
+ * @module
  */
-import type { ApiFromModules } from 'convex/server'
-import type * as sessions from '../sessions'
-import type * as messages from '../messages'
-import type * as assessments from '../assessments'
 
-export declare const api: ApiFromModules<{
-  sessions: typeof sessions
-  messages: typeof messages
-  assessments: typeof assessments
-}>
+import type * as assessments from "../assessments.js";
+import type * as messages from "../messages.js";
+import type * as sessions from "../sessions.js";
+
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
+
+declare const fullApi: ApiFromModules<{
+  assessments: typeof assessments;
+  messages: typeof messages;
+  sessions: typeof sessions;
+}>;
+
+/**
+ * A utility for referencing Convex functions in your app's public API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = api.myModule.myFunction;
+ * ```
+ */
+export declare const api: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "public">
+>;
+
+/**
+ * A utility for referencing Convex functions in your app's internal API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = internal.myModule.myFunction;
+ * ```
+ */
+export declare const internal: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "internal">
+>;
+
+export declare const components: {};

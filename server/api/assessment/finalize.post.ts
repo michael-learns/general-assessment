@@ -1,7 +1,7 @@
 import { ConvexHttpClient } from 'convex/browser'
-import { api } from '../../../convex/_generated/api'
-import type { Id } from '../../../convex/_generated/dataModel'
-import { parseAssessmentBlock, calculateFitScore } from '../../../lib/assessmentScorer'
+import { api } from '#convex/_generated/api'
+import type { Id } from '#convex/_generated/dataModel'
+import { parseAssessmentBlock, calculateFitScore } from '#lib/assessmentScorer'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()

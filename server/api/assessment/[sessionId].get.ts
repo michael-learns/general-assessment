@@ -1,6 +1,6 @@
 import { ConvexHttpClient } from 'convex/browser'
-import { api } from '../../../convex/_generated/api'
-import type { Id } from '../../../convex/_generated/dataModel'
+import { api } from '#convex/_generated/api'
+import type { Id } from '#convex/_generated/dataModel'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()

@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI, type Tool, SchemaType } from '@google/generative-ai'
 import { ConvexHttpClient } from 'convex/browser'
-import { api } from '../../convex/_generated/api'
-import type { Id } from '../../convex/_generated/dataModel'
-import { buildSystemPrompt } from '../../lib/systemPrompt'
+import { api } from '#convex/_generated/api'
+import type { Id } from '#convex/_generated/dataModel'
+import { buildSystemPrompt } from '#lib/systemPrompt'
 import { callCodealive } from '../utils/callCodealive'
 
 const CODEALIVE_TOOLS: Tool[] = [
