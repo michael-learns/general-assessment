@@ -80,5 +80,5 @@ export function getSection(sectionName: string): TopicSection | undefined {
 export function getNextSection(currentSection: string): string | null {
   const idx = TOPIC_MAP.findIndex(s => s.name === currentSection)
   if (idx === -1 || idx >= TOPIC_MAP.length - 1) return null
-  return TOPIC_MAP[idx + 1].name
+  return TOPIC_MAP[idx + 1]!.name
 }

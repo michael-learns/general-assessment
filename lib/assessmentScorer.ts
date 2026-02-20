@@ -17,7 +17,7 @@ export function parseAssessmentBlock(content: string): ParsedAssessment | null {
   if (!match) return null
 
   try {
-    const parsed = JSON.parse(match[1].trim())
+    const parsed = JSON.parse(match[1]!.trim())
     if (
       !Array.isArray(parsed.sections) ||
       typeof parsed.overallFitScore !== 'number' ||
