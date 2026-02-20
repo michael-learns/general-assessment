@@ -7,7 +7,15 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "lint": "nuxt lint",
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -20,6 +28,11 @@
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.92",
     "@iconify-json/simple-icons": "^1.2.71",
-    "@nuxt/eslint": "^1.15.1"
+    "@nuxt/eslint": "^1.15.1",
+    "@playwright/test": "^1.58.2",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^20.6.3",
+    "vitest": "^4.0.18"
   }
 }
