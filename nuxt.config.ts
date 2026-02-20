@@ -12,7 +12,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     geminiApiKey: '',
-    geminiModel: 'gemini-2.5-flash-preview-04-17',
+    geminiModel: 'gemini-2.5-flash',
     codeAliveApiKey: '',
     assessmentWebhookUrl: '',
     public: {
