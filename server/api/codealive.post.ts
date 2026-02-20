@@ -11,17 +11,21 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Invalid tool name' })
   }
 
-  const response = await $fetch<unknown>('https://mcp.codealive.ai/api', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${config.codeAliveApiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: {
-      tool: body.tool,
-      params: body.params
-    }
-  })
-
-  return response
+  try {
+    const response = await $fetch<unknown>('https://mcp.codealive.ai/api', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${config.codeAliveApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: {
+        tool: body.tool,
+        params: body.params
+      }
+    })
+    return response
+  } catch (error) {
+    console.error('[codealive.post] Upstream request failed:', error)
+    throw createError({ statusCode: 502, message: 'Codealive API unavailable' })
+  }
 })

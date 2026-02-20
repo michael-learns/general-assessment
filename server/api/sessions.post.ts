@@ -13,7 +13,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'companyName and industry are required' })
   }
 
-  const convex = new ConvexHttpClient(config.public.convexUrl || 'https://placeholder.convex.cloud')
+  // Dev fallback: return mock session ID when Convex is not yet configured.
+  // NOTE: Mock IDs are NOT valid Convex document IDs — downstream Convex calls
+  // (chat, assessment) will fail with mock IDs. This only unblocks UI development.
+  if (!config.public.convexUrl) {
+    const mockId = `dev_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+    return { sessionId: mockId }
+  }
+
+  const convex = new ConvexHttpClient(config.public.convexUrl)
 
   try {
     const sessionId = await convex.mutation(api.sessions.create, {
@@ -23,11 +31,7 @@ export default defineEventHandler(async (event) => {
     })
     return { sessionId }
   } catch (error) {
-    // If Convex is not yet configured, return a mock session ID for development
-    if (!config.public.convexUrl) {
-      const mockId = `dev_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
-      return { sessionId: mockId }
-    }
+    console.error('[sessions.post] Convex mutation failed:', error)
     throw createError({ statusCode: 500, message: 'Failed to create session' })
   }
 })
