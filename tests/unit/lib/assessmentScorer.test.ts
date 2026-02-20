@@ -18,6 +18,11 @@ describe('parseAssessmentBlock', () => {
     expect(parseAssessmentBlock('```assessment\nnot valid json\n```')).toBeNull()
   })
 
+  it('should return null for JSON missing required fields', () => {
+    const content = '```assessment\n{"overallFitScore": 80}\n```'
+    expect(parseAssessmentBlock(content)).toBeNull()
+  })
+
   it('should parse sections correctly', () => {
     const content = '```assessment\n{"overallFitScore": 70, "summary": "s", "recommendations": "r", "sections": [{"name": "Pay Structure", "status": "supported", "findings": "ok", "customerRequirements": ["req1"]}]}\n```'
     const result = parseAssessmentBlock(content)

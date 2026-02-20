@@ -13,11 +13,18 @@ export interface ParsedAssessment {
 }
 
 export function parseAssessmentBlock(content: string): ParsedAssessment | null {
-  const match = content.match(/```assessment\n([\s\S]*?)```/)
+  const match = content.match(/```assessment\r?\n([\s\S]*?)```/)
   if (!match) return null
 
   try {
-    return JSON.parse(match[1].trim()) as ParsedAssessment
+    const parsed = JSON.parse(match[1].trim())
+    if (
+      !Array.isArray(parsed.sections) ||
+      typeof parsed.overallFitScore !== 'number' ||
+      typeof parsed.summary !== 'string' ||
+      typeof parsed.recommendations !== 'string'
+    ) return null
+    return parsed as ParsedAssessment
   } catch {
     return null
   }
