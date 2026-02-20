@@ -13,3 +13,12 @@ This directory contains the Convex database schema and serverless functions.
 - **sessions** — one per customer assessment
 - **messages** — full conversation log per session
 - **assessments** — structured fit report per session
+
+## Important: Generated Files
+
+The `_generated/` directory currently contains **temporary bootstrap stubs** committed to allow TypeScript to work before you've set up Convex. These stubs have limitations:
+
+- `Id<T>` type allows any string as a table name (real types are stricter)
+- These files will be **overwritten** the first time you run `bunx convex dev`
+
+**You MUST run `bunx convex dev` before building or deploying this app.**

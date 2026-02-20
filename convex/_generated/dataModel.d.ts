@@ -1,3 +1,5 @@
+// TEMPORARY BOOTSTRAP STUB - will be overwritten by `bunx convex dev`
+// Note: Id<T> here is overly broad - real generated types constrain T to valid table names
 /* eslint-disable */
 /**
  * Generated data model stub - run `bunx convex dev` to regenerate

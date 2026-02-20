@@ -1,3 +1,5 @@
+// TEMPORARY BOOTSTRAP STUB - will be overwritten by `bunx convex dev`
+// Do not rely on these types as authoritative - run Convex dev to generate real types
 /* eslint-disable */
 /**
  * Generated API stub - run `bunx convex dev` to regenerate
