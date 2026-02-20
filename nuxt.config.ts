@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     geminiApiKey: '',
+    geminiModel: 'gemini-2.5-flash-preview-04-17',
     codeAliveApiKey: '',
     assessmentWebhookUrl: '',
     public: {

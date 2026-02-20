@@ -1,7 +1,9 @@
-import { GoogleGenerativeAI, SchemaType, type Tool } from '@google/generative-ai'
+import { GoogleGenerativeAI, type Tool, SchemaType } from '@google/generative-ai'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '../../convex/_generated/api'
+import type { Id } from '../../convex/_generated/dataModel'
 import { buildSystemPrompt } from '../../lib/systemPrompt'
+import { callCodealive } from '../utils/callCodealive'
 
 const CODEALIVE_TOOLS: Tool[] = [
   {
@@ -28,7 +30,7 @@ const CODEALIVE_TOOLS: Tool[] = [
           properties: {
             question: {
               type: SchemaType.STRING,
-              description: 'The specific question about system capability'
+              description: 'The specific question about system capability, e.g. "Does the system support retroactive pay adjustments for salary changes mid-pay-period?"'
             }
           },
           required: ['question']
@@ -38,13 +40,16 @@ const CODEALIVE_TOOLS: Tool[] = [
   }
 ]
 
+type ChatMessage = { role: 'user' | 'model'; content: string }
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const body = await readBody<{
     sessionId: string
     companyName: string
     industry: string
-    messages: { role: 'user' | 'model'; content: string }[]
+    // Client sends role as 'user' | 'model' (Gemini convention)
+    messages: ChatMessage[]
     userMessage: string
   }>(event)
 
@@ -52,12 +57,16 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'sessionId and userMessage are required' })
   }
 
-  // Save user message to Convex (skip in dev mode)
-  if (config.public.convexUrl && !body.sessionId.startsWith('dev_')) {
-    const convex = new ConvexHttpClient(config.public.convexUrl)
+  const isDevSession = body.sessionId.startsWith('dev_')
+  const convex = config.public.convexUrl && !isDevSession
+    ? new ConvexHttpClient(config.public.convexUrl)
+    : null
+
+  // Save user message
+  if (convex) {
     try {
       await convex.mutation(api.messages.add, {
-        sessionId: body.sessionId as any,
+        sessionId: body.sessionId as Id<'sessions'>,
         role: 'user',
         content: body.userMessage
       })
@@ -66,7 +75,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Set SSE headers
+  // SSE headers
   setResponseHeader(event, 'Content-Type', 'text/event-stream')
   setResponseHeader(event, 'Cache-Control', 'no-cache')
   setResponseHeader(event, 'Connection', 'keep-alive')
@@ -74,19 +83,17 @@ export default defineEventHandler(async (event) => {
 
   const genAI = new GoogleGenerativeAI(config.geminiApiKey)
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash-preview-04-17',
+    model: config.geminiModel || 'gemini-2.5-flash-preview-04-17',
     systemInstruction: buildSystemPrompt(body.companyName || 'the customer', body.industry || 'their industry'),
     tools: CODEALIVE_TOOLS
   })
 
-  // Build conversation history for Gemini
   const history = (body.messages || []).map(m => ({
-    role: m.role as 'user' | 'model',
+    role: m.role,
     parts: [{ text: m.content }]
   }))
 
   const chat = model.startChat({ history })
-
   const encoder = new TextEncoder()
 
   const stream = new ReadableStream({
@@ -98,23 +105,17 @@ export default defineEventHandler(async (event) => {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
       }
 
-      try {
-        // First round: get initial response (may include function calls)
-        const result = await chat.sendMessageStream(body.userMessage)
+      // Process one stream, handling any function calls, accumulating text
+      async function processStream(streamResult: ReturnType<typeof chat.sendMessageStream>) {
+        const pendingCalls: Array<{ name: string; args: Record<string, string> }> = []
 
-        let pendingFunctionCalls: Array<{ name: string; args: Record<string, string> }> = []
-
-        for await (const chunk of result.stream) {
+        for await (const chunk of (await streamResult).stream) {
           const calls = chunk.functionCalls()
           if (calls && calls.length > 0) {
             for (const call of calls) {
-              pendingFunctionCalls.push({
-                name: call.name,
-                args: call.args as Record<string, string>
-              })
+              pendingCalls.push({ name: call.name, args: call.args as Record<string, string> })
             }
           }
-
           const text = chunk.text()
           if (text) {
             fullResponse += text
@@ -122,54 +123,33 @@ export default defineEventHandler(async (event) => {
           }
         }
 
-        // Handle function calls by executing them and continuing the chat
-        if (pendingFunctionCalls.length > 0) {
+        if (pendingCalls.length > 0) {
           const functionResponses = []
-
-          for (const call of pendingFunctionCalls) {
+          for (const call of pendingCalls) {
             const query = call.args.query || call.args.question || ''
             codealiveQueries.push(`${call.name}: ${query}`)
             send({ type: 'tool_call', tool: call.name, query })
 
-            let toolResult = 'Feature lookup unavailable'
-            try {
-              // Map our tool names to Codealive API tool names
-              const caTool = call.name === 'codealive_search' ? 'codebase_search' : 'codebase_consultant'
-              const caResult = await $fetch<{ result?: string; content?: string }>(`/api/codealive`, {
-                method: 'POST',
-                body: { tool: caTool, params: call.args }
-              })
-              toolResult = typeof caResult === 'string' ? caResult : JSON.stringify(caResult)
-            } catch (err) {
-              console.error('[chat.post] Codealive call failed:', err)
-            }
+            const caTool = call.name === 'codealive_search' ? 'codebase_search' as const : 'codebase_consultant' as const
+            const toolResult = await callCodealive(config.codeAliveApiKey, caTool, call.args)
 
             functionResponses.push({
-              functionResponse: {
-                name: call.name,
-                response: { result: toolResult }
-              }
+              functionResponse: { name: call.name, response: { result: toolResult } }
             })
           }
-
-          // Continue chat with function responses to get final text
-          const continueResult = await chat.sendMessageStream(functionResponses)
-
-          for await (const chunk of continueResult.stream) {
-            const text = chunk.text()
-            if (text) {
-              fullResponse += text
-              send({ type: 'text', content: text })
-            }
-          }
+          // Recurse to handle potential chained function calls
+          await processStream(chat.sendMessageStream(functionResponses))
         }
+      }
 
-        // Save assistant message to Convex
-        if (config.public.convexUrl && !body.sessionId.startsWith('dev_') && fullResponse) {
-          const convex = new ConvexHttpClient(config.public.convexUrl)
+      try {
+        await processStream(chat.sendMessageStream(body.userMessage))
+
+        // Save assistant message
+        if (convex && fullResponse) {
           try {
             await convex.mutation(api.messages.add, {
-              sessionId: body.sessionId as any,
+              sessionId: body.sessionId as Id<'sessions'>,
               role: 'assistant',
               content: fullResponse,
               codealiveQueries: codealiveQueries.length > 0 ? codealiveQueries : undefined
