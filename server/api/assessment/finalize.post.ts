@@ -2,6 +2,7 @@ import { ConvexHttpClient } from 'convex/browser'
 import { api } from '#convex/_generated/api'
 import type { Id } from '#convex/_generated/dataModel'
 import { parseAssessmentBlock, calculateFitScore } from '#lib/assessmentScorer'
+import { getConfig } from '#lib/assessments/index'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -10,6 +11,10 @@ export default defineEventHandler(async (event) => {
     lastAssistantMessage: string
     companyName?: string
     industry?: string
+    email?: string
+    contactName?: string
+    sourceRef?: string
+    product?: string
   }>(event)
 
   if (!body.sessionId || !body.lastAssistantMessage) {
@@ -23,6 +28,9 @@ export default defineEventHandler(async (event) => {
 
   // Use calculateFitScore for a deterministic score (overrides AI-produced score)
   const fitScore = calculateFitScore(assessment.sections)
+
+  const productSlug = body.product || 'payroll'
+  const assessmentConfig = getConfig(productSlug)
 
   const isDevSession = body.sessionId.startsWith('dev_')
 
@@ -44,11 +52,20 @@ export default defineEventHandler(async (event) => {
       sections: assessment.sections,
       overallFitScore: fitScore,
       summary: assessment.summary,
-      recommendations: assessment.recommendations
+      recommendations: assessment.recommendations,
+      product: productSlug
     })
   } catch (err) {
     console.error('[finalize.post] Failed to save assessment:', err)
     throw createError({ statusCode: 500, message: 'Failed to save assessment' })
+  }
+
+  // Fetch session for webhook payload
+  let session: Record<string, unknown> | null = null
+  try {
+    session = await convex.query(api.sessions.get, { id: body.sessionId as Id<'sessions'> }) as Record<string, unknown> | null
+  } catch {
+    // Non-fatal — continue without session data
   }
 
   // Mark session complete
@@ -59,21 +76,51 @@ export default defineEventHandler(async (event) => {
     // Non-fatal — assessment is saved, continue
   }
 
+  // Resolve webhook URL: per-product config first, then env var
+  const webhookUrl = assessmentConfig?.webhookUrl || config.assessmentWebhookUrl
+
   // Fire webhook (fire and forget — do not await)
-  if (config.assessmentWebhookUrl) {
-    $fetch(config.assessmentWebhookUrl, {
-      method: 'POST',
-      body: {
-        assessmentId,
-        sessionId: body.sessionId,
-        companyName: body.companyName,
-        industry: body.industry,
+  if (webhookUrl) {
+    const now = new Date().toISOString()
+    const reqUrl = getRequestURL(event)
+    const baseUrl = `${reqUrl.protocol}//${reqUrl.host}`
+    const reportUrl = `${baseUrl}/report/${productSlug}/${body.sessionId}`
+
+    const webhookPayload = {
+      schemaVersion: '2',
+      event: 'assessment.completed',
+      timestamp: now,
+      product: {
+        slug: productSlug,
+        name: assessmentConfig?.productName ?? productSlug
+      },
+      client: {
+        companyName: body.companyName ?? (session?.companyName as string | undefined),
+        industry: body.industry ?? (session?.industry as string | undefined),
+        contactName: body.contactName ?? (session?.contactName as string | undefined),
+        email: body.email ?? (session?.email as string | undefined)
+      },
+      session: {
+        id: body.sessionId,
+        sourceRef: body.sourceRef ?? (session?.sourceRef as string | undefined),
+        startedAt: session?.createdAt ? new Date(session.createdAt as number).toISOString() : undefined,
+        completedAt: now
+      },
+      assessment: {
+        id: assessmentId,
         overallFitScore: fitScore,
         summary: assessment.summary,
-        sections: assessment.sections,
         recommendations: assessment.recommendations,
-        timestamp: new Date().toISOString()
+        sections: assessment.sections
+      },
+      links: {
+        report: reportUrl
       }
+    }
+
+    $fetch(webhookUrl, {
+      method: 'POST',
+      body: webhookPayload
     }).then(async () => {
       try {
         await convex.mutation(api.assessments.markWebhookSent, { id: assessmentId })

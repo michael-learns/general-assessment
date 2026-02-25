@@ -16,7 +16,8 @@ export const save = mutation({
     })),
     overallFitScore: v.number(),
     summary: v.string(),
-    recommendations: v.string()
+    recommendations: v.string(),
+    product: v.optional(v.string())
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert('assessments', {

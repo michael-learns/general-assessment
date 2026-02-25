@@ -5,7 +5,11 @@ export const create = mutation({
   args: {
     companyName: v.string(),
     industry: v.string(),
-    email: v.optional(v.string())
+    email: v.optional(v.string()),
+    userId: v.optional(v.string()),
+    product: v.optional(v.string()),
+    contactName: v.optional(v.string()),
+    sourceRef: v.optional(v.string())
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert('sessions', {
@@ -28,6 +32,24 @@ export const updateSection = mutation({
   args: { id: v.id('sessions'), section: v.string() },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, { currentSection: args.section })
+  }
+})
+
+export const listByUser = query({
+  args: {
+    userId: v.string(),
+    product: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    const results = await ctx.db
+      .query('sessions')
+      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .order('desc')
+      .collect()
+    if (args.product) {
+      return results.filter(s => (s.product ?? 'payroll') === args.product)
+    }
+    return results
   }
 })
 

@@ -4,12 +4,20 @@ export interface Message {
   timestamp: number
 }
 
-export function useChat(sessionId: string, companyName: string, industry: string) {
+export function useChat(sessionId: string, companyName: string, industry: string, product?: string) {
   const messages = ref<Message[]>([])
   const isStreaming = ref(false)
   const isCheckingFeature = ref(false)
   const streamingContent = ref('')
   const error = ref('')
+  const saveStatus = ref<'saved' | 'saving' | 'idle'>('idle')
+
+  function loadMessages(initial: Message[]) {
+    messages.value = [...initial]
+    if (initial.length > 0) {
+      saveStatus.value = 'saved'
+    }
+  }
 
   async function sendMessage(userMessage: string) {
     if (!userMessage.trim() || isStreaming.value) return
@@ -23,6 +31,7 @@ export function useChat(sessionId: string, companyName: string, industry: string
     isStreaming.value = true
     streamingContent.value = ''
     error.value = ''
+    saveStatus.value = 'saving'
 
     try {
       const response = await fetch('/api/chat', {
@@ -32,6 +41,7 @@ export function useChat(sessionId: string, companyName: string, industry: string
           sessionId,
           companyName,
           industry,
+          product: product || 'payroll',
           // Send all messages except the one just added (it's sent as userMessage)
           messages: messages.value.slice(0, -1),
           userMessage
@@ -73,8 +83,10 @@ export function useChat(sessionId: string, companyName: string, industry: string
                 })
                 streamingContent.value = ''
               }
+              saveStatus.value = 'saved'
             } else if (data.type === 'error') {
               error.value = data.message
+              saveStatus.value = 'idle'
             }
           } catch {
             // Malformed SSE line — skip
@@ -83,6 +95,7 @@ export function useChat(sessionId: string, companyName: string, industry: string
       }
     } catch (err) {
       error.value = 'Connection error. Please try again.'
+      saveStatus.value = 'idle'
       console.error('[useChat] fetch error:', err)
     } finally {
       isStreaming.value = false
@@ -96,7 +109,9 @@ export function useChat(sessionId: string, companyName: string, industry: string
     isStreaming: readonly(isStreaming),
     isCheckingFeature: readonly(isCheckingFeature),
     streamingContent: readonly(streamingContent),
+    saveStatus: readonly(saveStatus),
     error,
+    loadMessages,
     sendMessage
   }
 }

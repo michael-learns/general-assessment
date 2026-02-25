@@ -7,6 +7,10 @@ export default defineEventHandler(async (event) => {
     companyName: string
     industry: string
     email?: string
+    userId?: string
+    product?: string
+    contactName?: string
+    sourceRef?: string
   }>(event)
 
   if (!body.companyName?.trim() || !body.industry?.trim()) {
@@ -27,7 +31,11 @@ export default defineEventHandler(async (event) => {
     const sessionId = await convex.mutation(api.sessions.create, {
       companyName: body.companyName.trim(),
       industry: body.industry.trim(),
-      email: body.email?.trim()
+      email: body.email?.trim(),
+      userId: body.userId?.trim(),
+      product: body.product || 'payroll',
+      contactName: body.contactName?.trim(),
+      sourceRef: body.sourceRef?.trim()
     })
     return { sessionId }
   } catch (error) {

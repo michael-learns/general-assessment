@@ -1,3 +1,4 @@
+// Run bunx convex dev after changes to regenerate types.
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 
@@ -6,11 +7,15 @@ export default defineSchema({
     companyName: v.string(),
     industry: v.string(),
     email: v.optional(v.string()),
+    userId: v.optional(v.string()),
     status: v.union(v.literal('in_progress'), v.literal('completed')),
     currentSection: v.string(),
     createdAt: v.number(),
-    completedAt: v.optional(v.number())
-  }),
+    completedAt: v.optional(v.number()),
+    product: v.optional(v.string()),
+    contactName: v.optional(v.string()),
+    sourceRef: v.optional(v.string())
+  }).index('by_user', ['userId']),
 
   messages: defineTable({
     sessionId: v.id('sessions'),
@@ -36,6 +41,7 @@ export default defineSchema({
     summary: v.string(),
     recommendations: v.string(),
     webhookSent: v.boolean(),
-    createdAt: v.number()
+    createdAt: v.number(),
+    product: v.optional(v.string())
   }).index('by_session', ['sessionId'])
 })

@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { getSectionNames } from '../../lib/topicMap'
-
 defineProps<{
+  sections: string[]
   currentSection: string
   completedSections: string[]
   isCheckingFeature?: boolean
 }>()
-
-const sections = getSectionNames()
 
 function getStatus(section: string, currentSection: string, completedSections: string[]) {
   if (completedSections.includes(section)) return 'completed'

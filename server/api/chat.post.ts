@@ -3,42 +3,8 @@ import { ConvexHttpClient } from 'convex/browser'
 import { api } from '#convex/_generated/api'
 import type { Id } from '#convex/_generated/dataModel'
 import { buildSystemPrompt } from '#lib/systemPrompt'
+import { getConfig } from '#lib/assessments/index'
 import { callCodealive } from '../utils/callCodealive'
-
-const CODEALIVE_TOOLS: Tool[] = [
-  {
-    functionDeclarations: [
-      {
-        name: 'codealive_search',
-        description: 'Search the payroll system codebase to check if a specific feature, policy type, or functionality is supported.',
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {
-            query: {
-              type: SchemaType.STRING,
-              description: 'The feature or policy to search for, e.g. "split pay rates", "overtime calculation", "leave accrual"'
-            }
-          },
-          required: ['query']
-        }
-      },
-      {
-        name: 'codealive_consultant',
-        description: 'Get an in-depth analysis of whether a complex HR/payroll policy is supported by the payroll system.',
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {
-            question: {
-              type: SchemaType.STRING,
-              description: 'The specific question about system capability, e.g. "Does the system support retroactive pay adjustments for salary changes mid-pay-period?"'
-            }
-          },
-          required: ['question']
-        }
-      }
-    ]
-  }
-]
 
 type ChatMessage = { role: 'user' | 'model'; content: string }
 
@@ -48,6 +14,7 @@ export default defineEventHandler(async (event) => {
     sessionId: string
     companyName: string
     industry: string
+    product?: string
     // Client sends role as 'user' | 'model' (Gemini convention)
     messages: ChatMessage[]
     userMessage: string
@@ -56,6 +23,47 @@ export default defineEventHandler(async (event) => {
   if (!body.sessionId || !body.userMessage?.trim()) {
     throw createError({ statusCode: 400, message: 'sessionId and userMessage are required' })
   }
+
+  const productSlug = body.product || 'payroll'
+  const assessmentConfig = getConfig(productSlug)
+  if (!assessmentConfig) {
+    throw createError({ statusCode: 400, message: `Unknown product: ${productSlug}` })
+  }
+
+  const CODEALIVE_TOOLS: Tool[] = [
+    {
+      functionDeclarations: [
+        {
+          name: 'codealive_search',
+          description: assessmentConfig.codeAliveSearchDescription,
+          parameters: {
+            type: SchemaType.OBJECT,
+            properties: {
+              query: {
+                type: SchemaType.STRING,
+                description: 'The feature or policy to search for, e.g. "split pay rates", "overtime calculation", "leave accrual"'
+              }
+            },
+            required: ['query']
+          }
+        },
+        {
+          name: 'codealive_consultant',
+          description: assessmentConfig.codeAliveConsultantDescription,
+          parameters: {
+            type: SchemaType.OBJECT,
+            properties: {
+              question: {
+                type: SchemaType.STRING,
+                description: 'The specific question about system capability'
+              }
+            },
+            required: ['question']
+          }
+        }
+      ]
+    }
+  ]
 
   const isDevSession = body.sessionId.startsWith('dev_')
   const convex = config.public.convexUrl && !isDevSession
@@ -84,7 +92,7 @@ export default defineEventHandler(async (event) => {
   const genAI = new GoogleGenerativeAI(config.geminiApiKey)
   const model = genAI.getGenerativeModel({
     model: config.geminiModel || 'gemini-2.5-flash-preview-04-17',
-    systemInstruction: buildSystemPrompt(body.companyName || 'the customer', body.industry || 'their industry'),
+    systemInstruction: buildSystemPrompt(assessmentConfig, body.companyName || 'the customer', body.industry || 'their industry'),
     tools: CODEALIVE_TOOLS
   })
 

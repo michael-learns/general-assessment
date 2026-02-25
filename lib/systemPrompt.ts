@@ -1,14 +1,13 @@
-import { TOPIC_MAP, type TopicSection } from './topicMap'
+import type { AssessmentConfig, AssessmentSection } from './assessments/types'
 
-export function buildSystemPrompt(companyName: string, industry: string): string {
-  const topicMapStr = TOPIC_MAP
-    .filter(s => s.name !== 'Summary')
+export function buildSystemPrompt(config: AssessmentConfig, companyName: string, industry: string): string {
+  const topicMapStr = config.sections
     .map(section => formatSection(section))
     .join('\n\n')
 
-  return `You are a professional payroll consultant conducting a fit assessment for ${companyName}, a company in the ${industry} industry.
+  return `You are a professional ${config.consultantPersona} conducting a fit assessment for ${companyName}, a company in the ${industry} industry.
 
-Your goal is to determine whether our payroll system can meet their HR and payroll needs by conducting a structured but natural conversation.
+Your goal is to determine whether our ${config.productName} can meet their HR and payroll needs by conducting a structured but natural conversation.
 
 ## Your Behavior
 
@@ -56,7 +55,7 @@ Status definitions:
 Start the conversation by warmly introducing yourself and asking for the customer's first name.`
 }
 
-function formatSection(section: TopicSection): string {
+function formatSection(section: AssessmentSection): string {
   return `### ${section.name}
 Required questions (cover all of these):
 ${section.requiredQuestions.map(q => `- ${q}`).join('\n')}

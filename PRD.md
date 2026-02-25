@@ -1,3 +1,5 @@
+> **SUPERSEDED by PRD-v2.md (v2.0, 2026-06-22). See PRD-v2.md for current architecture.**
+
 # Product Requirements Document
 ## AI Payroll Fit Assessment
 
