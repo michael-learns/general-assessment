@@ -4,6 +4,11 @@ defineProps<{
   currentSection: string
   completedSections: string[]
   isCheckingFeature?: boolean
+  disabled?: boolean
+}>()
+
+const emit = defineEmits<{
+  jumpToSection: [section: string]
 }>()
 
 function getStatus(section: string, currentSection: string, completedSections: string[]) {
@@ -20,14 +25,18 @@ function getStatus(section: string, currentSection: string, completedSections: s
     </h2>
 
     <div class="space-y-1">
-      <div
+      <button
         v-for="section in sections"
         :key="section"
-        class="flex items-center gap-3 py-2 px-3 rounded-lg transition-all duration-200"
+        type="button"
+        class="w-full flex items-center gap-3 py-2 px-3 rounded-lg transition-all duration-200 text-left"
         :class="{
           'bg-primary-50 dark:bg-primary-950/50': getStatus(section, currentSection, completedSections) === 'active',
-          'opacity-40': getStatus(section, currentSection, completedSections) === 'pending'
+          'opacity-50': getStatus(section, currentSection, completedSections) === 'pending',
+          'hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer': !disabled
         }"
+        :disabled="disabled"
+        @click="emit('jumpToSection', section)"
       >
         <div class="w-5 h-5 shrink-0 flex items-center justify-center">
           <UIcon
@@ -53,7 +62,7 @@ function getStatus(section: string, currentSection: string, completedSections: s
         >
           {{ section }}
         </span>
-      </div>
+      </button>
     </div>
 
     <Transition name="fade">

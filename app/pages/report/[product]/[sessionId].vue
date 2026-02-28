@@ -24,6 +24,9 @@ const route = useRoute()
 const sessionId = route.params.sessionId as string
 const productSlug = route.params.product as string
 const config = useRuntimeConfig()
+const demoBookingUrl = computed(() =>
+  config.public.demoBookingUrl?.trim() || 'https://calendar.app.google/ZaTDPhES2ZuLGji48'
+)
 
 const assessmentConfig = getConfig(productSlug)
 
@@ -173,12 +176,21 @@ function downloadReport() {
 
       <!-- Actions -->
       <div class="flex gap-3 justify-center print:hidden pb-4">
+        <UButton
+          icon="i-lucide-plus-circle"
+          variant="outline"
+          color="neutral"
+          :to="`/assess/${productSlug}`"
+        >
+          Start a new assessment
+        </UButton>
         <UButton icon="i-lucide-printer" variant="outline" color="neutral" @click="downloadReport">
           Download PDF
         </UButton>
         <UButton
           icon="i-lucide-calendar"
-          :to="config.public.demoBookingUrl || 'https://calendly.com'"
+          :href="demoBookingUrl"
+          external
           target="_blank"
           rel="noopener noreferrer"
         >

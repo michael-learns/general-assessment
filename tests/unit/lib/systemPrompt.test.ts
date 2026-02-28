@@ -33,4 +33,25 @@ describe('buildSystemPrompt', () => {
     const prompt = buildSystemPrompt(payrollConfig, 'Test Co', 'Retail')
     expect(prompt).toContain(payrollConfig.consultantPersona)
   })
+
+  it('should instruct AI to include answer options for each question', () => {
+    const prompt = buildSystemPrompt(payrollConfig, 'Test Co', 'Retail')
+    expect(prompt).toContain('Provide selectable answer options for every question')
+    expect(prompt).toContain('Other (please specify)')
+  })
+
+  it('should enforce Philippines scope and PHP currency', () => {
+    const prompt = buildSystemPrompt(payrollConfig, 'Test Co', 'Retail')
+    expect(prompt).toContain('localized to the Philippines')
+    expect(prompt).toContain('Philippine Peso (PHP)')
+  })
+
+  it('should ask Yahshua source question after name with fixed options', () => {
+    const prompt = buildSystemPrompt(payrollConfig, 'Test Co', 'Retail')
+    expect(prompt).toContain('"How did you know about Yahshua"')
+    expect(prompt).toContain('GLOBE')
+    expect(prompt).toContain('RCBC')
+    expect(prompt).toContain('STERLING BANK OF ASIA')
+    expect(prompt).toContain('OTHERS (Type Answer)')
+  })
 })

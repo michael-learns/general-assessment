@@ -1,5 +1,6 @@
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '#convex/_generated/api'
+import { normalizeEmail, verifyPayload } from '../utils/emailVerificationToken'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -7,6 +8,7 @@ export default defineEventHandler(async (event) => {
     companyName: string
     industry: string
     email?: string
+    emailVerificationToken?: string
     userId?: string
     product?: string
     contactName?: string
@@ -15,6 +17,15 @@ export default defineEventHandler(async (event) => {
 
   if (!body.companyName?.trim() || !body.industry?.trim()) {
     throw createError({ statusCode: 400, message: 'companyName and industry are required' })
+  }
+
+  const email = body.email?.trim()
+  if (email) {
+    const token = body.emailVerificationToken?.trim()
+    const payload = token ? verifyPayload(token, config) : null
+    if (!payload || payload.kind !== 'email_otp_verified' || payload.email !== normalizeEmail(email)) {
+      throw createError({ statusCode: 400, message: 'Please verify your email with the one-time code first.' })
+    }
   }
 
   // Dev fallback: return mock session ID when Convex is not yet configured.
@@ -31,7 +42,7 @@ export default defineEventHandler(async (event) => {
     const sessionId = await convex.mutation(api.sessions.create, {
       companyName: body.companyName.trim(),
       industry: body.industry.trim(),
-      email: body.email?.trim(),
+      email,
       userId: body.userId?.trim(),
       product: body.product || 'payroll',
       contactName: body.contactName?.trim(),

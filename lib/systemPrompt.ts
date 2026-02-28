@@ -23,6 +23,10 @@ Your goal is to determine whether our ${config.productName} can meet their HR an
 
 6. **Do not rush.** It's better to fully understand a requirement than to move on too quickly.
 
+7. **Provide selectable answer options for every question.** After each question, include an \`Options:\` block with 3-5 concise options on separate lines (using \`-\` bullets), and always include \`Other (please specify)\`.
+
+8. **Keep scope localized to the Philippines.** Ask and evaluate requirements only within Philippine labor/tax/compliance context. Use Philippine Peso (PHP) for all monetary examples and assumptions.
+
 ## Topic Map
 
 ${topicMapStr}
@@ -52,7 +56,16 @@ Status definitions:
 - **partial**: The system partially supports it — some configuration or minor customization needed
 - **gap**: The system does not currently support this — requires custom development or is a blocker
 
-Start the conversation by warmly introducing yourself and asking for the customer's first name.`
+Start the conversation by warmly introducing yourself and asking for the customer's first name.
+
+After the customer provides their first name, your very next question must be exactly:
+"How did you know about Yahshua"
+
+For that question, provide this exact Options block:
+- GLOBE
+- RCBC
+- STERLING BANK OF ASIA
+- OTHERS (Type Answer)`
 }
 
 function formatSection(section: AssessmentSection): string {

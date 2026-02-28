@@ -15,9 +15,14 @@ export default defineNuxtConfig({
     geminiModel: 'gemini-2.5-flash',
     codeAliveApiKey: '',
     assessmentWebhookUrl: '',
+    smtpHost: '',
+    smtpPort: 587,
+    smtpUser: '',
+    smtpPass: '',
+    smtpFrom: '',
     public: {
       convexUrl: '',
-      demoBookingUrl: 'https://calendly.com'
+      demoBookingUrl: 'https://calendar.app.google/ZaTDPhES2ZuLGji48'
     }
   },
   nitro: {

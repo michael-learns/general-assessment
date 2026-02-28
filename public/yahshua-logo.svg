@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Yahshua logo">
+  <circle cx="64" cy="64" r="60" fill="#f97344" />
+  <circle cx="64" cy="45" r="8" fill="#ffffff" />
+  <path
+    d="M27 38 L64 58 L101 38 L75 66 C71 70 68 76 66 92 L62 92 C60 76 57 70 53 66 Z"
+    fill="#ffffff"
+  />
+</svg>

@@ -5,6 +5,7 @@ import { parseAssessmentBlock } from '../../../../lib/assessmentScorer'
 const route = useRoute()
 const sessionId = route.params.sessionId as string
 const productSlug = route.params.product as string
+const isReviewEditMode = computed(() => route.query.mode === 'edit')
 
 const assessmentConfig = getConfig(productSlug)
 
@@ -40,6 +41,147 @@ const completedSections = ref<string[]>([])
 const isFinalizing = ref(false)
 const justSaved = ref(false)
 const confirmingRestart = ref(false)
+const pendingFinalMessage = ref('')
+const selectedOptions = ref<string[]>([])
+const otherOptionText = ref('')
+
+function isOtherOption(option: string): boolean {
+  return option.toLowerCase().includes('other')
+}
+
+function parseAnswerOptions(content: string): string[] {
+  if (!content) return []
+  const lines = content.split('\n')
+  const optionsStart = lines.findIndex(line => /^(options|choices)\s*:?\s*$/i.test(line.trim()))
+  if (optionsStart === -1) return []
+
+  const options: string[] = []
+  for (let i = optionsStart + 1; i < lines.length; i++) {
+    const rawLine = lines[i].trim()
+    if (!rawLine) {
+      if (options.length > 0) break
+      continue
+    }
+    if (/^[A-Z][\w\s-]+:\s*$/.test(rawLine) && !/^other/i.test(rawLine)) break
+
+    const option = rawLine
+      .replace(/^[-*]\s+/, '')
+      .replace(/^\d+[\.\)]\s+/, '')
+      .replace(/^[A-Za-z][\.\)]\s+/, '')
+      .trim()
+
+    if (option) {
+      let normalizedOption = option.replace(/^partners:\s*/i, '').trim()
+      if (/^bi[-\s]?weekly$/i.test(normalizedOption)) {
+        normalizedOption = 'Bi-monthly'
+      }
+      if (/^mixed\s*\(.*\)$/i.test(normalizedOption)) {
+        normalizedOption = 'Mixed'
+      }
+      if (/^others?\b/i.test(normalizedOption)) {
+        normalizedOption = 'OTHERS (Type Answer)'
+      }
+      options.push(normalizedOption)
+    }
+    if (options.length >= 8) break
+  }
+
+  return options
+}
+
+function stripOptionsBlock(content: string): string {
+  if (!content) return content
+  const lines = content.split('\n')
+  const output: string[] = []
+  let skippingOptions = false
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+
+    if (!skippingOptions && /^(options|choices)\s*:?\s*$/i.test(trimmed)) {
+      skippingOptions = true
+      continue
+    }
+
+    if (skippingOptions) {
+      const isOptionLine = /^[-*]\s+/.test(trimmed) || /^\d+[\.\)]\s+/.test(trimmed) || /^[A-Za-z][\.\)]\s+/.test(trimmed)
+      if (!trimmed || isOptionLine) {
+        continue
+      }
+      skippingOptions = false
+    }
+
+    output.push(line)
+  }
+
+  return output.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+}
+
+const latestModelMessage = computed(() => {
+  for (let i = messages.value.length - 1; i >= 0; i--) {
+    if (messages.value[i].role === 'model') return messages.value[i].content
+  }
+  return ''
+})
+
+const fallbackOptions = ['Yes', 'No', 'Not sure', 'Other (please specify)']
+
+function requiresTypedName(content: string): boolean {
+  const normalized = content.toLowerCase()
+  return normalized.includes('first name') || normalized.includes('your name')
+}
+
+const currentQuestionOptions = computed(() => {
+  if (requiresTypedName(latestModelMessage.value)) return []
+  const parsedOptions = parseAnswerOptions(latestModelMessage.value)
+  if (parsedOptions.length > 0) return parsedOptions
+  if (latestModelMessage.value.includes('?')) return fallbackOptions
+  return []
+})
+
+const needsOtherInput = computed(() => selectedOptions.value.some(isOtherOption))
+
+const hasSelectedResponse = computed(() => {
+  if (selectedOptions.value.length === 0) return false
+  if (needsOtherInput.value) return !!otherOptionText.value.trim()
+  return true
+})
+
+const canSendMessage = computed(() =>
+  !isStreaming.value &&
+  !isFinalizing.value &&
+  (!!inputMessage.value.trim() || hasSelectedResponse.value)
+)
+
+function toggleOption(option: string) {
+  if (isStreaming.value || isFinalizing.value) return
+  if (selectedOptions.value.includes(option)) {
+    selectedOptions.value = selectedOptions.value.filter(o => o !== option)
+    if (isOtherOption(option)) otherOptionText.value = ''
+    return
+  }
+  selectedOptions.value = [...selectedOptions.value, option]
+}
+
+function buildSelectedOptionsMessage(): string {
+  return selectedOptions.value
+    .map(option => {
+      if (isOtherOption(option)) return `Other: ${otherOptionText.value.trim()}`
+      return option
+    })
+    .join('; ')
+}
+
+async function jumpToSection(section: string) {
+  if (isStreaming.value || isFinalizing.value) return
+  currentSection.value = section
+  selectedOptions.value = []
+  otherOptionText.value = ''
+  inputMessage.value = ''
+  pendingFinalMessage.value = ''
+
+  await sendMessage(`I want to review and correct my answers in the "${section}" module. Please ask me the questions for this module again one by one, and use my updated answers for the final assessment.`)
+}
 
 async function restartAssessment() {
   if (!confirmingRestart.value) {
@@ -71,7 +213,7 @@ watch(messages, (newMessages) => {
   // Check if assessment is complete
   const assessment = parseAssessmentBlock(lastAi.content)
   if (assessment && !isFinalizing.value) {
-    finalizeAssessment(lastAi.content)
+    pendingFinalMessage.value = lastAi.content
     return
   }
 
@@ -90,12 +232,20 @@ watch(messages, (newMessages) => {
       break
     }
   }
+
+  const lastMessage = newMessages[newMessages.length - 1]
+  if (lastMessage?.role === 'model') {
+    selectedOptions.value = []
+    otherOptionText.value = ''
+  }
 }, { deep: true })
 
 async function handleSend() {
-  if (!inputMessage.value.trim() || isStreaming.value) return
-  const msg = inputMessage.value.trim()
+  if (!canSendMessage.value) return
+  const msg = inputMessage.value.trim() || buildSelectedOptionsMessage()
   inputMessage.value = ''
+  selectedOptions.value = []
+  otherOptionText.value = ''
   await sendMessage(msg)
 }
 
@@ -117,6 +267,15 @@ async function finalizeAssessment(lastMessage: string) {
     console.error('Failed to finalize assessment:', err)
     isFinalizing.value = false
   }
+}
+
+async function confirmFinalize() {
+  if (!pendingFinalMessage.value || isFinalizing.value) return
+  await finalizeAssessment(pendingFinalMessage.value)
+}
+
+function reviewBeforeFinalize() {
+  pendingFinalMessage.value = ''
 }
 
 function handleManualSave() {
@@ -157,6 +316,16 @@ onMounted(async () => {
         companyName: companyName.value,
         industry: industry.value
       }))
+
+      // Review/Edit mode: continue from captured answers instead of restarting modules.
+      if (isReviewEditMode.value) {
+        const editPromptKey = `review_edit_prompted_${sessionId}`
+        const alreadyPrompted = sessionStorage.getItem(editPromptKey) === '1'
+        if (!alreadyPrompted) {
+          sessionStorage.setItem(editPromptKey, '1')
+          await sendMessage('I want to review and edit my existing answers only. Do not restart from the first question of each module. Briefly summarize my current answers by module and ask me which specific answers I want to change.')
+        }
+      }
       return // Don't auto-start — we have history already
     }
   } catch {
@@ -261,14 +430,14 @@ onMounted(async () => {
             v-for="(msg, i) in messages"
             :key="i"
             :role="msg.role"
-            :content="msg.content"
+            :content="msg.role === 'model' ? stripOptionsBlock(msg.content) : msg.content"
           />
 
           <!-- Streaming message -->
           <MessageBubble
             v-if="isStreaming && streamingContent"
             role="model"
-            :content="streamingContent"
+            :content="stripOptionsBlock(streamingContent)"
             :is-streaming="true"
           />
 
@@ -298,10 +467,56 @@ onMounted(async () => {
         />
 
         <!-- Input area -->
-        <div class="border-t border-gray-200 dark:border-gray-800 p-4 flex gap-3 shrink-0">
+        <div class="border-t border-gray-200 dark:border-gray-800 shrink-0">
+          <UAlert
+            v-if="pendingFinalMessage"
+            class="mx-4 mt-3"
+            color="warning"
+            variant="soft"
+            icon="i-lucide-file-check-2"
+            title="Assessment draft is ready"
+            description="You can review and edit any module before generating the final report."
+          />
+          <div v-if="pendingFinalMessage" class="px-4 pt-2 pb-1 flex gap-2">
+            <UButton size="xs" color="warning" :disabled="isFinalizing" @click="confirmFinalize">
+              Generate report now
+            </UButton>
+            <UButton size="xs" variant="ghost" color="neutral" :disabled="isFinalizing" @click="reviewBeforeFinalize">
+              Review answers first
+            </UButton>
+          </div>
+
+          <div
+            v-if="currentQuestionOptions.length > 0"
+            class="px-4 pt-3 pb-2"
+          >
+            <p class="text-xs text-gray-500 mb-2">Select one or more answers:</p>
+            <div class="flex flex-col gap-2">
+              <UButton
+                v-for="option in currentQuestionOptions"
+                :key="option"
+                size="xs"
+                class="w-fit"
+                :variant="selectedOptions.includes(option) ? 'solid' : 'soft'"
+                color="neutral"
+                :disabled="isStreaming || isFinalizing"
+                @click="toggleOption(option)"
+              >
+                {{ option }}
+              </UButton>
+            </div>
+            <UInput
+              v-if="needsOtherInput"
+              v-model="otherOptionText"
+              placeholder="Enter your custom answer"
+              class="mt-2"
+              :disabled="isStreaming || isFinalizing"
+            />
+          </div>
+          <div class="p-4 flex gap-3">
           <UTextarea
             v-model="inputMessage"
-            placeholder="Type your response..."
+            placeholder="Type your response or select options above..."
             autoresize
             :rows="1"
             class="flex-1"
@@ -311,10 +526,11 @@ onMounted(async () => {
           <UButton
             icon="i-lucide-send"
             :loading="isStreaming"
-            :disabled="!inputMessage.trim() || isFinalizing"
+            :disabled="!canSendMessage"
             aria-label="Send message"
             @click="handleSend"
           />
+          </div>
         </div>
       </div>
 
@@ -325,6 +541,8 @@ onMounted(async () => {
           :current-section="currentSection"
           :completed-sections="completedSections"
           :is-checking-feature="isCheckingFeature"
+          :disabled="isStreaming || isFinalizing"
+          @jump-to-section="jumpToSection"
         />
       </aside>
     </div>

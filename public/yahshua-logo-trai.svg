@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Yahshua TRAI logo">
+  <circle cx="64" cy="64" r="60" fill="#f97344" />
+  <path
+    d="M23 60 H49 C52 60 55 62 56 64 C57 66 56 68 53 70 C50 72 50 74 54 74 H89"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="2.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path d="M22 60 H41 V82" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" />
+  <path d="M64 32 L46 96" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" />
+  <path d="M64 32 L82 96" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" />
+  <path d="M53 74 H89 V92 H80" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" />
+</svg>
