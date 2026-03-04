@@ -9,7 +9,15 @@ export const create = mutation({
     userId: v.optional(v.string()),
     product: v.optional(v.string()),
     contactName: v.optional(v.string()),
-    sourceRef: v.optional(v.string())
+    sourceRef: v.optional(v.string()),
+    address: v.optional(v.string()),
+    tin: v.optional(v.string()),
+    numberOfEmployees: v.optional(v.number()),
+    authorizedSignatory: v.optional(v.string()),
+    signatoryPosition: v.optional(v.string()),
+    contactPerson: v.optional(v.string()),
+    contactPosition: v.optional(v.string()),
+    contactPhone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert('sessions', {
@@ -59,6 +67,19 @@ export const complete = mutation({
     await ctx.db.patch(args.id, {
       status: 'completed',
       completedAt: Date.now()
+    })
+  }
+})
+
+export const updateScoping = mutation({
+  args: {
+    id: v.id('sessions'),
+    scopingData: v.any()
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      scopingData: args.scopingData,
+      scopingCompleted: true
     })
   }
 })
