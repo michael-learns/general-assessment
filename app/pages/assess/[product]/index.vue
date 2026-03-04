@@ -32,16 +32,6 @@ const form = reactive({
   dataPrivacyConsent: false
 })
 
-const emailVerificationCode = ref('')
-const emailVerificationError = ref('')
-const emailVerificationInfo = ref('')
-const emailVerificationSent = ref(false)
-const emailVerified = ref(false)
-const sendingVerificationCode = ref(false)
-const verifyingEmailCode = ref(false)
-const emailPendingToken = ref('')
-const emailVerifiedToken = ref('')
-
 // Hidden fields from URL params
 const contactName = (query.name as string) || ''
 const sourceRef = (query.ref as string) || ''
@@ -137,10 +127,6 @@ async function startAssessment() {
     formError.value = 'Please enter your company name and select an industry.'
     return
   }
-  if (form.email.trim() && !emailVerified.value) {
-    formError.value = 'Please verify your work email using the one-time code.'
-    return
-  }
   if (!form.dataPrivacyConsent) {
     formError.value = 'Please provide explicit consent by confirming the Data Privacy Act notice and privacy policy/consent form acknowledgment before continuing.'
     return
@@ -154,7 +140,6 @@ async function startAssessment() {
       method: 'POST',
       body: {
         ...form,
-        emailVerificationToken: form.email.trim() ? emailVerifiedToken.value : undefined,
         userId: userId.value ?? undefined,
         product: productSlug,
         contactName: contactName || undefined,
@@ -168,80 +153,6 @@ async function startAssessment() {
   } catch {
     formError.value = 'Something went wrong. Please try again.'
     loading.value = false
-  }
-}
-
-const normalizedEmail = computed(() => form.email.trim().toLowerCase())
-
-watch(normalizedEmail, () => {
-  emailVerified.value = false
-  emailVerificationSent.value = false
-  emailVerificationCode.value = ''
-  emailVerificationError.value = ''
-  emailVerificationInfo.value = ''
-  emailPendingToken.value = ''
-  emailVerifiedToken.value = ''
-})
-
-async function sendVerificationCode() {
-  if (!form.email.trim()) {
-    emailVerificationError.value = 'Please enter your work email first.'
-    return
-  }
-
-  sendingVerificationCode.value = true
-  emailVerificationError.value = ''
-  emailVerificationInfo.value = ''
-
-  try {
-    const response = await $fetch<{ ok: boolean; devCode?: string; pendingToken: string }>('/api/email-verification/send', {
-      method: 'POST',
-      body: { email: form.email.trim() }
-    })
-
-    emailVerificationSent.value = true
-    emailPendingToken.value = response.pendingToken
-    emailVerified.value = false
-    emailVerifiedToken.value = ''
-    emailVerificationInfo.value = 'One-time code sent. Please check your email.'
-    if (response.devCode) {
-      emailVerificationInfo.value = `Dev mode code: ${response.devCode}`
-    }
-  } catch (err: any) {
-    emailVerificationError.value = err?.data?.message || 'Failed to send verification code.'
-  } finally {
-    sendingVerificationCode.value = false
-  }
-}
-
-async function verifyEmailCode() {
-  if (!form.email.trim() || !emailVerificationCode.value.trim()) {
-    emailVerificationError.value = 'Enter the one-time code sent to your email.'
-    return
-  }
-
-  verifyingEmailCode.value = true
-  emailVerificationError.value = ''
-  emailVerificationInfo.value = ''
-
-  try {
-    const response = await $fetch<{ verified: boolean; verifiedToken: string }>('/api/email-verification/verify', {
-      method: 'POST',
-      body: {
-        email: form.email.trim(),
-        code: emailVerificationCode.value.trim(),
-        pendingToken: emailPendingToken.value
-      }
-    })
-    emailVerified.value = true
-    emailVerifiedToken.value = response.verifiedToken
-    emailVerificationInfo.value = 'Email verified successfully.'
-  } catch (err: any) {
-    emailVerified.value = false
-    emailVerifiedToken.value = ''
-    emailVerificationError.value = err?.data?.message || 'Verification failed.'
-  } finally {
-    verifyingEmailCode.value = false
   }
 }
 
@@ -403,46 +314,7 @@ function formatDate(ts: number) {
             </UFormField>
 
             <UFormField label="Work Email (optional)">
-              <div class="space-y-2">
-                <div class="flex gap-2">
-                  <UInput v-model="form.email" type="email" placeholder="you@company.com" class="w-full" />
-                  <UButton
-                    type="button"
-                    variant="soft"
-                    color="neutral"
-                    :loading="sendingVerificationCode"
-                    :disabled="!form.email.trim() || sendingVerificationCode || verifyingEmailCode"
-                    @click="sendVerificationCode"
-                  >
-                    {{ emailVerificationSent ? 'Resend code' : 'Send code' }}
-                  </UButton>
-                </div>
-
-                <div v-if="emailVerificationSent && !emailVerified" class="flex gap-2">
-                  <UInput
-                    v-model="emailVerificationCode"
-                    placeholder="Enter one-time code"
-                    maxlength="6"
-                    class="w-full"
-                  />
-                  <UButton
-                    type="button"
-                    color="primary"
-                    :loading="verifyingEmailCode"
-                    :disabled="!emailVerificationCode.trim() || verifyingEmailCode"
-                    @click="verifyEmailCode"
-                  >
-                    Verify
-                  </UButton>
-                </div>
-
-                <div v-if="emailVerified" class="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                  <UIcon name="i-lucide-circle-check" class="w-3.5 h-3.5" />
-                  <span>Email verified</span>
-                </div>
-                <p v-if="emailVerificationInfo" class="text-xs text-gray-500">{{ emailVerificationInfo }}</p>
-                <p v-if="emailVerificationError" class="text-xs text-red-500">{{ emailVerificationError }}</p>
-              </div>
+              <UInput v-model="form.email" type="email" placeholder="you@company.com" class="w-full" />
             </UFormField>
 
             <label class="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-gray-800 p-3">
@@ -468,7 +340,7 @@ function formatDate(ts: number) {
               type="submit"
               block
               :loading="loading"
-              :disabled="!form.dataPrivacyConsent || (!!form.email.trim() && !emailVerified)"
+              :disabled="!form.dataPrivacyConsent"
               size="lg"
               class="mt-2"
             >

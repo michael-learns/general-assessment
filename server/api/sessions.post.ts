@@ -1,6 +1,5 @@
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '#convex/_generated/api'
-import { normalizeEmail, verifyPayload } from '../utils/emailVerificationToken'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -8,7 +7,6 @@ export default defineEventHandler(async (event) => {
     companyName: string
     industry: string
     email?: string
-    emailVerificationToken?: string
     userId?: string
     product?: string
     contactName?: string
@@ -20,13 +18,6 @@ export default defineEventHandler(async (event) => {
   }
 
   const email = body.email?.trim()
-  if (email) {
-    const token = body.emailVerificationToken?.trim()
-    const payload = token ? verifyPayload(token, config) : null
-    if (!payload || payload.kind !== 'email_otp_verified' || payload.email !== normalizeEmail(email)) {
-      throw createError({ statusCode: 400, message: 'Please verify your email with the one-time code first.' })
-    }
-  }
 
   // Dev fallback: return mock session ID when Convex is not yet configured.
   // NOTE: Mock IDs are NOT valid Convex document IDs — downstream Convex calls
