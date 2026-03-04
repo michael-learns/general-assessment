@@ -13,6 +13,15 @@ export default defineEventHandler(async (event) => {
     product?: string
     contactName?: string
     sourceRef?: string
+    // New registration fields
+    address?: string
+    tin?: string
+    numberOfEmployees?: number
+    authorizedSignatory?: string
+    signatoryPosition?: string
+    contactPerson?: string
+    contactPosition?: string
+    contactPhone?: string
   }>(event)
 
   if (!body.companyName?.trim() || !body.industry?.trim()) {
@@ -46,7 +55,15 @@ export default defineEventHandler(async (event) => {
       userId: body.userId?.trim(),
       product: body.product || 'payroll',
       contactName: body.contactName?.trim(),
-      sourceRef: body.sourceRef?.trim()
+      sourceRef: body.sourceRef?.trim(),
+      address: body.address?.trim(),
+      tin: body.tin?.trim(),
+      numberOfEmployees: body.numberOfEmployees,
+      authorizedSignatory: body.authorizedSignatory?.trim(),
+      signatoryPosition: body.signatoryPosition?.trim(),
+      contactPerson: body.contactPerson?.trim(),
+      contactPosition: body.contactPosition?.trim(),
+      contactPhone: body.contactPhone?.trim(),
     })
     return { sessionId }
   } catch (error) {
