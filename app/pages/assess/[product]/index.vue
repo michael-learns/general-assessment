@@ -28,6 +28,16 @@ const query = route.query
 const form = reactive({
   companyName: (query.company as string) || '',
   industry: (query.industry as string) || '',
+  // New registration fields
+  address: '',
+  tin: '',
+  numberOfEmployees: undefined as number | undefined,
+  authorizedSignatory: '',
+  signatoryPosition: '',
+  contactPerson: '',
+  contactPosition: '',
+  contactPhone: '',
+  // Existing
   email: (query.email as string) || '',
   dataPrivacyConsent: false
 })
@@ -137,6 +147,38 @@ async function startAssessment() {
     formError.value = 'Please enter your company name and select an industry.'
     return
   }
+  if (!form.address.trim()) {
+    formError.value = 'Please enter your company address.'
+    return
+  }
+  if (!form.tin.trim()) {
+    formError.value = 'Please enter your company TIN.'
+    return
+  }
+  if (!form.numberOfEmployees || form.numberOfEmployees < 1) {
+    formError.value = 'Please enter the number of employees.'
+    return
+  }
+  if (!form.authorizedSignatory.trim()) {
+    formError.value = 'Please enter the authorized signatory name.'
+    return
+  }
+  if (!form.signatoryPosition.trim()) {
+    formError.value = 'Please enter the authorized signatory position.'
+    return
+  }
+  if (!form.contactPerson.trim()) {
+    formError.value = 'Please enter the payroll contact person.'
+    return
+  }
+  if (!form.contactPosition.trim()) {
+    formError.value = 'Please enter the payroll contact position.'
+    return
+  }
+  if (!form.contactPhone.trim()) {
+    formError.value = 'Please enter the contact phone number.'
+    return
+  }
   if (form.email.trim() && !emailVerified.value) {
     formError.value = 'Please verify your work email using the one-time code.'
     return
@@ -164,7 +206,7 @@ async function startAssessment() {
     companyName.value = form.companyName
     industry.value = form.industry
     localStorage.removeItem('payroll_session')
-    await navigateTo(`/assess/${productSlug}/${sessionId}`)
+    await navigateTo(`/assess/${productSlug}/${sessionId}/scope`)
   } catch {
     formError.value = 'Something went wrong. Please try again.'
     loading.value = false
@@ -400,6 +442,49 @@ function formatDate(ts: number) {
                 placeholder="Select your industry"
                 class="w-full"
               />
+            </UFormField>
+
+            <UFormField label="Company Address" required>
+              <UTextarea
+                v-model="form.address"
+                placeholder="Unit/Floor, Building, Street, City, Province"
+                class="w-full"
+                :rows="2"
+              />
+            </UFormField>
+
+            <UFormField label="Company TIN" required>
+              <UInput v-model="form.tin" placeholder="000-000-000-000" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Number of Employees" required>
+              <UInput
+                v-model.number="form.numberOfEmployees"
+                type="number"
+                placeholder="e.g. 50"
+                :min="1"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UFormField label="Authorized Signatory Name" required>
+              <UInput v-model="form.authorizedSignatory" placeholder="Full name" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Authorized Signatory Position" required>
+              <UInput v-model="form.signatoryPosition" placeholder="e.g. CEO, HR Director" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Payroll Contact Person" required>
+              <UInput v-model="form.contactPerson" placeholder="Full name" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Payroll Contact Position" required>
+              <UInput v-model="form.contactPosition" placeholder="e.g. Payroll Officer" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Contact Phone" required>
+              <UInput v-model="form.contactPhone" placeholder="e.g. +63 917 123 4567" class="w-full" />
             </UFormField>
 
             <UFormField label="Work Email (optional)">
