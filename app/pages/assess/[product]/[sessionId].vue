@@ -288,17 +288,21 @@ onMounted(async () => {
   const { loadFromStorage } = useAuth()
   loadFromStorage()
 
+  // Redirect to scoping form if not yet completed
+  const session = await $fetch<{ companyName: string; industry: string; scopingCompleted?: boolean } | null>(
+    `/api/sessions/${sessionId}`
+  ).catch(() => null)
+  if (session && !session.scopingCompleted) {
+    await navigateTo(`/assess/${productSlug}/${sessionId}/scope`)
+    return
+  }
+
   // Restore session data if state was lost (e.g. page refresh or direct link)
   if (!companyName.value) {
-    try {
-      const session = await $fetch<{ companyName: string; industry: string } | null>(
-        `/api/sessions/${sessionId}`
-      )
-      if (session) {
-        companyName.value = session.companyName
-        industry.value = session.industry
-      }
-    } catch {
+    if (session) {
+      companyName.value = session.companyName
+      industry.value = session.industry
+    } else {
       await navigateTo(`/assess/${productSlug}`)
       return
     }

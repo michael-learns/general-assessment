@@ -89,10 +89,47 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'Connection', 'keep-alive')
   setResponseHeader(event, 'X-Accel-Buffering', 'no')
 
+  // Fetch session for scoping context
+  let sessionScopingData: Record<string, any> | undefined
+  let sessionRegistrationData: {
+    numberOfEmployees?: number
+    address?: string
+    authorizedSignatory?: string
+    contactPerson?: string
+    contactPhone?: string
+  } | undefined
+
+  if (convex) {
+    try {
+      const session = await convex.query(api.sessions.get, {
+        id: body.sessionId as Id<'sessions'>
+      })
+      if (session) {
+        sessionScopingData = session.scopingData
+        sessionRegistrationData = {
+          numberOfEmployees: session.numberOfEmployees,
+          address: session.address,
+          authorizedSignatory: session.authorizedSignatory,
+          contactPerson: session.contactPerson,
+          contactPhone: session.contactPhone
+        }
+      }
+    } catch (err) {
+      console.error('[chat.post] Failed to fetch session for scoping context:', err)
+      // Non-fatal: continue without scoping context
+    }
+  }
+
   const genAI = new GoogleGenerativeAI(config.geminiApiKey)
   const model = genAI.getGenerativeModel({
     model: config.geminiModel || 'gemini-2.5-flash-preview-04-17',
-    systemInstruction: buildSystemPrompt(assessmentConfig, body.companyName || 'the customer', body.industry || 'their industry'),
+    systemInstruction: buildSystemPrompt(
+      assessmentConfig,
+      body.companyName || 'the customer',
+      body.industry || 'their industry',
+      sessionScopingData,
+      sessionRegistrationData
+    ),
     tools: CODEALIVE_TOOLS
   })
 
