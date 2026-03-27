@@ -26,8 +26,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'companyName and industry are required' })
   }
 
-  const email = body.email?.trim()
-
   // Dev fallback: return mock session ID when Convex is not yet configured.
   // NOTE: Mock IDs are NOT valid Convex document IDs — downstream Convex calls
   // (chat, assessment) will fail with mock IDs. This only unblocks UI development.
@@ -42,23 +40,24 @@ export default defineEventHandler(async (event) => {
     const sessionId = await convex.mutation(api.sessions.create, {
       companyName: body.companyName.trim(),
       industry: body.industry.trim(),
-      email,
-      userId: body.userId?.trim(),
+      email: body.email?.trim() || undefined,
+      userId: body.userId?.trim() || undefined,
       product: body.product || 'payroll',
-      contactName: body.contactName?.trim(),
-      sourceRef: body.sourceRef?.trim(),
-      address: body.address?.trim(),
-      tin: body.tin?.trim(),
-      numberOfEmployees: body.numberOfEmployees,
-      authorizedSignatory: body.authorizedSignatory?.trim(),
-      signatoryPosition: body.signatoryPosition?.trim(),
-      contactPerson: body.contactPerson?.trim(),
-      contactPosition: body.contactPosition?.trim(),
-      contactPhone: body.contactPhone?.trim(),
+      contactName: body.contactName?.trim() || undefined,
+      sourceRef: body.sourceRef?.trim() || undefined,
+      address: body.address?.trim() || undefined,
+      tin: body.tin?.trim() || undefined,
+      numberOfEmployees: body.numberOfEmployees || undefined,
+      authorizedSignatory: body.authorizedSignatory?.trim() || undefined,
+      signatoryPosition: body.signatoryPosition?.trim() || undefined,
+      contactPerson: body.contactPerson?.trim() || undefined,
+      contactPosition: body.contactPosition?.trim() || undefined,
+      contactPhone: body.contactPhone?.trim() || undefined,
     })
     return { sessionId }
-  } catch (error) {
-    console.error('[sessions.post] Convex mutation failed:', error)
-    throw createError({ statusCode: 500, message: 'Failed to create session' })
+  } catch (error: any) {
+    const msg = error?.message || error?.data || String(error)
+    console.error('[sessions.post] Convex mutation failed:', msg)
+    throw createError({ statusCode: 500, message: `Failed to create session: ${msg}` })
   }
 })
