@@ -2,13 +2,13 @@ import type { AssessmentConfig } from './types'
 
 export const hrmsConfig: AssessmentConfig = {
   slug: 'hrms',
-  productName: 'HRMS',
+  productName: 'HRIS',
   consultantPersona: 'HR systems consultant',
-  introDescription: 'Find out if our HRMS is the right fit for your organization',
+  introDescription: 'Find out if our HRIS is the right fit for your organization',
 
   codeAliveRepoId: 'hrms',
-  codeAliveSearchDescription: 'Search the HRMS codebase to check if a specific feature or functionality is supported.',
-  codeAliveConsultantDescription: 'Get an in-depth analysis of whether a complex HR requirement is supported by the HRMS.',
+  codeAliveSearchDescription: 'Search the HRIS codebase to check if a specific feature or functionality is supported.',
+  codeAliveConsultantDescription: 'Get an in-depth analysis of whether a complex HR requirement is supported by the HRIS.',
 
   sections: [
     {

@@ -169,10 +169,6 @@ async function startAssessment() {
     formError.value = 'Please enter the contact phone number.'
     return
   }
-  if (form.email.trim() && !emailVerified.value) {
-    formError.value = 'Please verify your work email using the one-time code.'
-    return
-  }
   if (!form.dataPrivacyConsent) {
     formError.value = 'Please provide explicit consent by confirming the Data Privacy Act notice and privacy policy/consent form acknowledgment before continuing.'
     return

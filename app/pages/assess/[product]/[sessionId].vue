@@ -274,10 +274,6 @@ async function confirmFinalize() {
   await finalizeAssessment(pendingFinalMessage.value)
 }
 
-function reviewBeforeFinalize() {
-  pendingFinalMessage.value = ''
-}
-
 function handleManualSave() {
   justSaved.value = true
   setTimeout(() => { justSaved.value = false }, 2000)
@@ -484,9 +480,6 @@ onMounted(async () => {
           <div v-if="pendingFinalMessage" class="px-4 pt-2 pb-1 flex gap-2">
             <UButton size="xs" color="warning" :disabled="isFinalizing" @click="confirmFinalize">
               Generate report now
-            </UButton>
-            <UButton size="xs" variant="ghost" color="neutral" :disabled="isFinalizing" @click="reviewBeforeFinalize">
-              Review answers first
             </UButton>
           </div>
 

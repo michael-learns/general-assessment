@@ -9,7 +9,7 @@ if (allProducts.length === 1) {
 }
 
 useSeoMeta({
-  title: 'AI Fit Assessment',
+  title: 'Product Fit Assessment',
   description: 'Choose a product to assess your fit'
 })
 </script>
@@ -18,10 +18,11 @@ useSeoMeta({
   <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
     <div class="w-full max-w-lg space-y-6">
       <div class="text-center space-y-2">
-        <div class="flex justify-center mb-3">
-          <UIcon name="i-lucide-brain-circuit" class="w-12 h-12 text-primary-500" />
+        <div class="flex justify-center items-center gap-3 mb-3">
+          <img src="/yahshua-logo-trai.svg" alt="Yahshua TRAI logo" class="w-14 h-14 rounded-full shadow-sm border border-white/40" />
+          <img src="/yahshua-logo.svg" alt="Yahshua human logo" class="w-14 h-14 rounded-full shadow-sm border border-white/40" />
         </div>
-        <h1 class="text-3xl font-bold">AI Fit Assessment</h1>
+        <h1 class="text-3xl font-bold">Product Fit Assessment</h1>
         <p class="text-gray-500">Select a product to start your assessment.</p>
       </div>
 
