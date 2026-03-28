@@ -28,6 +28,7 @@ const query = route.query
 const form = reactive({
   companyName: (query.company as string) || '',
   industry: (query.industry as string) || '',
+  otherIndustry: '',
   // New registration fields
   address: '',
   tin: '',
@@ -51,6 +52,10 @@ const industries = [
   'Finance', 'Education', 'Construction', 'Hospitality',
   'Professional Services', 'Other'
 ]
+
+const effectiveIndustry = computed(() =>
+  form.industry === 'Other' ? form.otherIndustry.trim() : form.industry
+)
 
 const loading = ref(false)
 const formError = ref('')
@@ -137,6 +142,10 @@ async function startAssessment() {
     formError.value = 'Please enter your company name and select an industry.'
     return
   }
+  if (form.industry === 'Other' && !effectiveIndustry.value) {
+    formError.value = 'Please specify your industry.'
+    return
+  }
   if (!form.address.trim()) {
     formError.value = 'Please enter your company address.'
     return
@@ -169,6 +178,10 @@ async function startAssessment() {
     formError.value = 'Please enter the contact phone number.'
     return
   }
+  if (!form.email.trim()) {
+    formError.value = 'Please enter your work email.'
+    return
+  }
   if (!form.dataPrivacyConsent) {
     formError.value = 'Please provide explicit consent by confirming the Data Privacy Act notice and privacy policy/consent form acknowledgment before continuing.'
     return
@@ -182,6 +195,7 @@ async function startAssessment() {
       method: 'POST',
       body: {
         ...form,
+        industry: effectiveIndustry.value,
         userId: userId.value ?? undefined,
         product: productSlug,
         contactName: contactName || undefined,
@@ -189,7 +203,7 @@ async function startAssessment() {
       }
     })
     companyName.value = form.companyName
-    industry.value = form.industry
+    industry.value = effectiveIndustry.value
     localStorage.removeItem('payroll_session')
     await navigateTo(`/assess/${productSlug}/${sessionId}/scope`)
   } catch {
@@ -353,6 +367,12 @@ function formatDate(ts: number) {
                 placeholder="Select your industry"
                 class="w-full"
               />
+              <UInput
+                v-if="form.industry === 'Other'"
+                v-model="form.otherIndustry"
+                placeholder="Please specify your industry"
+                class="w-full mt-2"
+              />
             </UFormField>
 
             <UFormField label="Company Address" required>
@@ -398,7 +418,7 @@ function formatDate(ts: number) {
               <UInput v-model="form.contactPhone" placeholder="e.g. +63 917 123 4567" class="w-full" />
             </UFormField>
 
-            <UFormField label="Work Email (optional)">
+            <UFormField label="Work Email" required>
               <UInput v-model="form.email" type="email" placeholder="you@company.com" class="w-full" />
             </UFormField>
 
@@ -409,7 +429,7 @@ function formatDate(ts: number) {
                 class="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               >
               <span class="text-sm text-gray-600 dark:text-gray-300">
-                By ticking this box, I confirm that I have read and understood the Privacy Policy. I voluntarily consent to the collection, use, processing, and storage of my personal data by [Company Name] for payroll assessment, implementation planning, compliance evaluation, and related legitimate business purposes in accordance with the Data Privacy Act of 2012 and applicable regulations of the National Privacy Commission.
+                By ticking this box, I confirm that I have read and understood the Privacy Policy. I voluntarily consent to the collection, use, processing, and storage of my personal data by {{ form.companyName || 'the company' }} for payroll assessment, implementation planning, compliance evaluation, and related legitimate business purposes in accordance with the Data Privacy Act of 2012 and applicable regulations of the National Privacy Commission.
               </span>
             </label>
 

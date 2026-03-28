@@ -19,6 +19,52 @@ export function useChat(sessionId: string, companyName: string, industry: string
     }
   }
 
+  async function streamResponse(response: Response) {
+    if (!response.body) throw new Error('No response body')
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        try {
+          const data = JSON.parse(line.slice(6))
+
+          if (data.type === 'text') {
+            streamingContent.value += data.content
+          } else if (data.type === 'tool_call') {
+            isCheckingFeature.value = true
+          } else if (data.type === 'done') {
+            isCheckingFeature.value = false
+            if (streamingContent.value) {
+              messages.value.push({
+                role: 'model',
+                content: streamingContent.value,
+                timestamp: Date.now()
+              })
+              streamingContent.value = ''
+            }
+            saveStatus.value = 'saved'
+          } else if (data.type === 'error') {
+            error.value = data.message
+            saveStatus.value = 'idle'
+          }
+        } catch {
+          // Malformed SSE line — skip
+        }
+      }
+    }
+  }
+
   async function sendMessage(userMessage: string) {
     if (!userMessage.trim() || isStreaming.value) return
 
@@ -48,51 +94,44 @@ export function useChat(sessionId: string, companyName: string, industry: string
         })
       })
 
-      if (!response.ok || !response.body) {
-        throw new Error(`Chat request failed: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`Chat request failed: ${response.status}`)
+      await streamResponse(response)
+    } catch (err) {
+      error.value = 'Connection error. Please try again.'
+      saveStatus.value = 'idle'
+      console.error('[useChat] fetch error:', err)
+    } finally {
+      isStreaming.value = false
+      isCheckingFeature.value = false
+      streamingContent.value = ''
+    }
+  }
 
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
+  async function sendGreeting() {
+    if (isStreaming.value) return
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+    isStreaming.value = true
+    streamingContent.value = ''
+    error.value = ''
+    saveStatus.value = 'saving'
 
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          companyName,
+          industry,
+          product: product || 'payroll',
+          messages: [],
+          userMessage: '__START__',
+          isInitialGreeting: true
+        })
+      })
 
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          try {
-            const data = JSON.parse(line.slice(6))
-
-            if (data.type === 'text') {
-              streamingContent.value += data.content
-            } else if (data.type === 'tool_call') {
-              isCheckingFeature.value = true
-            } else if (data.type === 'done') {
-              isCheckingFeature.value = false
-              if (streamingContent.value) {
-                messages.value.push({
-                  role: 'model',
-                  content: streamingContent.value,
-                  timestamp: Date.now()
-                })
-                streamingContent.value = ''
-              }
-              saveStatus.value = 'saved'
-            } else if (data.type === 'error') {
-              error.value = data.message
-              saveStatus.value = 'idle'
-            }
-          } catch {
-            // Malformed SSE line — skip
-          }
-        }
-      }
+      if (!response.ok) throw new Error(`Chat request failed: ${response.status}`)
+      await streamResponse(response)
     } catch (err) {
       error.value = 'Connection error. Please try again.'
       saveStatus.value = 'idle'
@@ -112,6 +151,7 @@ export function useChat(sessionId: string, companyName: string, industry: string
     saveStatus: readonly(saveStatus),
     error,
     loadMessages,
-    sendMessage
+    sendMessage,
+    sendGreeting
   }
 }
