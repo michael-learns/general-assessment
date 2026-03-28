@@ -337,14 +337,18 @@ onMounted(async () => {
     // Non-fatal — fall through to auto-start
   }
 
-  // No prior messages — start fresh
+  // No prior messages — start fresh with a manual greeting
   if (companyName.value) {
     localStorage.setItem('payroll_session', JSON.stringify({
       sessionId,
       companyName: companyName.value,
       industry: industry.value
     }))
-    await sendGreeting()
+    loadMessages([{
+      role: 'model',
+      content: `Hi there! I'm your payroll consultant, and I'm here to help determine if our payroll system is a good fit for **${companyName.value}**. I already have some information from your registration and scoping form, so we can jump right in.\n\nTo start — how did you hear about Yahshua?\n\nOptions:\n- GLOBE\n- RCBC\n- STERLING BANK OF ASIA\n- OTHERS (Type Answer)`,
+      timestamp: Date.now()
+    }])
   }
 })
 </script>
