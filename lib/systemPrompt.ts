@@ -78,16 +78,9 @@ Status definitions:
 - **partial**: The system partially supports it — some configuration or minor customization needed
 - **gap**: The system does not currently support this — requires custom development or is a blocker
 
-When the conversation starts (the user's first message may be "__START__" or a greeting), warmly introduce yourself and greet the customer by name using the contact person information from their registration. Do NOT ask for their name — it was already provided during registration.
+IMPORTANT: The customer has already been greeted and asked "How did you hear about Yahshua?" before this conversation starts. The user's very first message is their answer to that question. Do NOT repeat the greeting or the Yahshua question. Acknowledge their answer briefly and proceed to the first topic in the topic map.
 
-Your very first question after greeting must be exactly:
-"How did you know about Yahshua?"
-
-For that question, provide this exact Options block:
-- GLOBE
-- RCBC
-- STERLING BANK OF ASIA
-- OTHERS (Type Answer)`
+Do NOT ask for the customer's name — it was already provided during registration.`
 }
 
 function buildScopingContext(
