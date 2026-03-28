@@ -245,8 +245,20 @@ watch(messages, (newMessages) => {
   }
 }, { deep: true })
 
+const greetingMessage = computed(() =>
+  `Hi there! I'm your payroll consultant, and I'm here to help determine if our payroll system is a good fit for **${companyName.value}**. I already have some information from your registration and scoping form, so we can jump right in.\n\nTo start — how did you hear about Yahshua?\n\nOptions:\n- GLOBE\n- RCBC\n- STERLING BANK OF ASIA\n- OTHERS (Type Answer)`
+)
+
 async function handleSend() {
   if (!canSendMessage.value) return
+  // Inject greeting into history before first user message
+  if (messages.value.length === 0) {
+    loadMessages([{
+      role: 'model',
+      content: greetingMessage.value,
+      timestamp: Date.now()
+    }])
+  }
   const msg = inputMessage.value.trim() || buildSelectedOptionsMessage()
   inputMessage.value = ''
   selectedOptions.value = []
@@ -435,6 +447,12 @@ onMounted(async () => {
       <div class="flex-1 flex flex-col min-w-0">
         <!-- Messages -->
         <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+          <!-- Auto-greeting when no messages yet -->
+          <MessageBubble
+            v-if="messages.length === 0 && !isStreaming && companyName"
+            role="model"
+            :content="greetingMessage"
+          />
           <MessageBubble
             v-for="(msg, i) in messages"
             :key="i"
