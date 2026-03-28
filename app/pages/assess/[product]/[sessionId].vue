@@ -141,6 +141,7 @@ function requiresTypedName(content: string): boolean {
 }
 
 const currentQuestionOptions = computed(() => {
+  if (showGreeting.value) return greetingOptions
   if (requiresTypedName(latestModelMessage.value)) return []
   const parsedOptions = parseAnswerOptions(latestModelMessage.value)
   if (parsedOptions.length > 0) return parsedOptions
@@ -250,8 +251,11 @@ watch(messages, (newMessages) => {
 }, { deep: true })
 
 const greetingMessage = computed(() =>
-  `Hi there! I'm your payroll consultant, and I'm here to help determine if our payroll system is a good fit for **${companyName.value}**. I already have some information from your registration and scoping form, so we can jump right in.\n\nTo start — how did you hear about Yahshua?\n\nOptions:\n- GLOBE\n- RCBC\n- STERLING BANK OF ASIA\n- OTHERS (Type Answer)`
+  `Hi there! I'm your payroll consultant, and I'm here to help determine if our payroll system is a good fit for **${companyName.value}**. I already have some information from your registration and scoping form, so we can jump right in.\n\nTo start — how did you hear about Yahshua?`
 )
+
+const greetingOptions = ['GLOBE', 'RCBC', 'STERLING BANK OF ASIA', 'OTHERS (Type Answer)']
+const showGreeting = computed(() => messages.value.length === 0 && !isStreaming.value && companyName.value)
 
 async function handleSend() {
   if (!canSendMessage.value) return
