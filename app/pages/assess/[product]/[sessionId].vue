@@ -91,7 +91,11 @@ function parseAnswerOptions(content: string): string[] {
 }
 
 function stripAssessmentBlock(content: string): string {
-  return content.replace(/```assessment[\s\S]*?```/g, '').replace(/\n{3,}/g, '\n\n').trim()
+  // Remove complete assessment blocks
+  let result = content.replace(/```assessment[\s\S]*?```/g, '')
+  // Also remove incomplete/in-progress assessment blocks (during streaming)
+  result = result.replace(/```assessment[\s\S]*$/g, '')
+  return result.replace(/\n{3,}/g, '\n\n').trim()
 }
 
 function stripOptionsBlock(content: string): string {
