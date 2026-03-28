@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
     // Client sends role as 'user' | 'model' (Gemini convention)
     messages: ChatMessage[]
     userMessage: string
+    isInitialGreeting?: boolean
   }>(event)
 
   if (!body.sessionId || !body.userMessage?.trim()) {
@@ -71,7 +72,7 @@ export default defineEventHandler(async (event) => {
     : null
 
   // Save user message
-  if (convex) {
+  if (convex && !body.isInitialGreeting) {
     try {
       await convex.mutation(api.messages.add, {
         sessionId: body.sessionId as Id<'sessions'>,
