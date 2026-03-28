@@ -4,7 +4,7 @@ export interface Message {
   timestamp: number
 }
 
-export function useChat(sessionId: string, companyName: string, industry: string, product?: string) {
+export function useChat(sessionId: string, companyNameRef: Ref<string>, industryRef: Ref<string>, product?: string) {
   const messages = ref<Message[]>([])
   const isStreaming = ref(false)
   const isCheckingFeature = ref(false)
@@ -85,8 +85,8 @@ export function useChat(sessionId: string, companyName: string, industry: string
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId,
-          companyName,
-          industry,
+          companyName: companyNameRef.value,
+          industry: industryRef.value,
           product: product || 'payroll',
           // Send all messages except the one just added (it's sent as userMessage)
           messages: messages.value.slice(0, -1),
@@ -121,8 +121,8 @@ export function useChat(sessionId: string, companyName: string, industry: string
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId,
-          companyName,
-          industry,
+          companyName: companyNameRef.value,
+          industry: industryRef.value,
           product: product || 'payroll',
           messages: [],
           userMessage: '__START__',

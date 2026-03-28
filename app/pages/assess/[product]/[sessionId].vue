@@ -33,7 +33,7 @@ const {
   loadMessages,
   sendMessage,
   sendGreeting
-} = useChat(sessionId, companyName.value, industry.value, productSlug)
+} = useChat(sessionId, companyName, industry, productSlug)
 
 const inputMessage = ref('')
 const messagesContainer = ref<HTMLElement>()
