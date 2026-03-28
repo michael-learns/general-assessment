@@ -1,9 +1,18 @@
 <script setup lang="ts">
-defineProps<{
+import { marked } from 'marked'
+
+const props = defineProps<{
   role: 'user' | 'assistant' | 'model'
   content: string
   isStreaming?: boolean
 }>()
+
+marked.setOptions({ breaks: true, gfm: true })
+
+const renderedContent = computed(() => {
+  if (props.role === 'user') return ''
+  return marked.parse(props.content) as string
+})
 </script>
 
 <template>
@@ -24,7 +33,8 @@ defineProps<{
         ? 'bg-primary-500 text-white rounded-tr-sm'
         : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-tl-sm'"
     >
-      <p class="whitespace-pre-wrap">{{ content }}</p>
+      <div v-if="role !== 'user'" class="prose prose-sm dark:prose-invert max-w-none" v-html="renderedContent" />
+      <p v-else class="whitespace-pre-wrap">{{ content }}</p>
       <span
         v-if="isStreaming"
         class="inline-block w-1.5 h-4 bg-current opacity-70 animate-pulse ml-0.5 align-text-bottom"
