@@ -31,7 +31,8 @@ const {
   saveStatus,
   error,
   loadMessages,
-  sendMessage
+  sendMessage,
+  sendGreeting
 } = useChat(sessionId, companyName.value, industry.value, productSlug)
 
 const inputMessage = ref('')
@@ -87,6 +88,10 @@ function parseAnswerOptions(content: string): string[] {
   }
 
   return options
+}
+
+function stripAssessmentBlock(content: string): string {
+  return content.replace(/```assessment[\s\S]*?```/g, '').replace(/\n{3,}/g, '\n\n').trim()
 }
 
 function stripOptionsBlock(content: string): string {
@@ -339,7 +344,7 @@ onMounted(async () => {
       companyName: companyName.value,
       industry: industry.value
     }))
-    await sendMessage(`Hi! I'm from ${companyName.value}, a ${industry.value} company. I'd like to start the assessment.`)
+    await sendGreeting()
   }
 })
 </script>
@@ -430,14 +435,14 @@ onMounted(async () => {
             v-for="(msg, i) in messages"
             :key="i"
             :role="msg.role"
-            :content="msg.role === 'model' ? stripOptionsBlock(msg.content) : msg.content"
+            :content="msg.role === 'model' ? stripAssessmentBlock(stripOptionsBlock(msg.content)) : msg.content"
           />
 
           <!-- Streaming message -->
           <MessageBubble
             v-if="isStreaming && streamingContent"
             role="model"
-            :content="stripOptionsBlock(streamingContent)"
+            :content="stripAssessmentBlock(stripOptionsBlock(streamingContent))"
             :is-streaming="true"
           />
 
