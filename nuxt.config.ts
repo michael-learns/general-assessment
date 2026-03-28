@@ -5,6 +5,12 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
   modules: ['@nuxt/ui', '@nuxt/eslint'],
+  fonts: {
+    defaults: {
+      weights: [400, 500, 600, 700],
+    },
+    provider: 'none'
+  },
   css: ['~/assets/css/main.css'],
   alias: {
     '#convex': resolve(__dirname, './convex'),
