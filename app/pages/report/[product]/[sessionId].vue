@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { getConfig } from '../../../../lib/assessments/index'
+import { marked } from 'marked'
+
+marked.setOptions({ breaks: true, gfm: true })
 
 type SectionStatus = 'supported' | 'partial' | 'gap'
 
@@ -126,9 +129,7 @@ function downloadReport() {
         <template #header>
           <h2 class="font-semibold text-base">Executive Summary</h2>
         </template>
-        <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-          {{ data.assessment.summary }}
-        </p>
+        <div class="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300" v-html="marked.parse(data.assessment.summary)" />
       </UCard>
 
       <!-- Section Breakdown -->
@@ -149,7 +150,7 @@ function downloadReport() {
                 {{ statusConfig[section.status].label }}
               </UBadge>
             </div>
-            <p class="text-sm text-gray-600 dark:text-gray-400">{{ section.findings }}</p>
+            <div class="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-400" v-html="marked.parse(section.findings)" />
             <ul v-if="section.customerRequirements?.length" class="space-y-1 mt-2">
               <li
                 v-for="req in section.customerRequirements"
@@ -169,9 +170,7 @@ function downloadReport() {
         <template #header>
           <h2 class="font-semibold text-base">Implementation Notes</h2>
         </template>
-        <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-          {{ data.assessment.recommendations }}
-        </p>
+        <div class="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300" v-html="marked.parse(data.assessment.recommendations)" />
       </UCard>
 
       <!-- Actions -->
