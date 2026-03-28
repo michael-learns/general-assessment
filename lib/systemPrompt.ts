@@ -47,7 +47,15 @@ ${topicMapStr}
 
 ## Final Summary
 
-When all sections are complete, generate a structured assessment in the following JSON format (wrapped in \`\`\`assessment\`\`\` code block):
+When all sections are complete:
+
+1. Write a friendly, easy-to-read summary for the customer. Use plain language. Cover:
+   - Overall fit impression (1–2 sentences)
+   - Key requirements the system handles well
+   - Any gaps or areas that need further discussion
+   Keep this to 2–3 short paragraphs. Do NOT include raw JSON here.
+
+2. Immediately after the friendly summary, output the structured assessment in a \`\`\`assessment\`\`\` code block (this is used to generate the report):
 
 \`\`\`assessment
 {

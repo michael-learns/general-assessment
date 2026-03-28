@@ -14,10 +14,7 @@ export const payrollConfig: AssessmentConfig = {
     {
       name: 'Company Overview',
       requiredQuestions: [
-        'How many employees does your company have?',
-        'What industry or sector are you in?',
-        'Do you operate under multiple legal entities or companies in the Philippines?',
-        'Which Philippine regions, provinces, or cities do you operate in?'
+        'Do you operate under multiple legal entities or companies in the Philippines?'
       ],
       codealiveSearchHints: ['multi-entity', 'philippines regions', 'company setup']
     },
@@ -25,7 +22,7 @@ export const payrollConfig: AssessmentConfig = {
       name: 'Pay Structure',
       requiredQuestions: [
         'What pay frequencies do you use (weekly, bi-monthly, monthly, mixed, or others)?',
-        'Do you have a mix of salaried, hourly, commission-based, or contractor employees?',
+        'Do you have a mix of full-time fixed-salary, hourly rate, commission-based, or contractor employees?',
         'How do you handle overtime — fixed multiplier or custom rules?',
         'Do any employees have multiple pay rates or split pay?',
         'Are there shift differentials or special pay premiums?'
