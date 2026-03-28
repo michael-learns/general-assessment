@@ -88,8 +88,13 @@ export function useChat(sessionId: string, companyNameRef: Ref<string>, industry
           companyName: companyNameRef.value,
           industry: industryRef.value,
           product: product || 'payroll',
-          // Send all messages except the one just added (it's sent as userMessage)
-          messages: messages.value.slice(0, -1),
+          // Send history excluding the message just added. Drop leading model
+          // messages since Gemini requires the first message to have role 'user'.
+          messages: messages.value.slice(0, -1).reduce<typeof messages.value>((acc, m) => {
+            if (acc.length === 0 && m.role === 'model') return acc
+            acc.push(m)
+            return acc
+          }, []),
           userMessage
         })
       })
