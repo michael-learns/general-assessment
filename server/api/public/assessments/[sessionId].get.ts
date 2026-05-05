@@ -2,6 +2,8 @@ import { ConvexHttpClient } from 'convex/browser'
 import { api } from '#convex/_generated/api'
 import type { Id } from '#convex/_generated/dataModel'
 import { getConfig } from '#lib/assessments/index'
+import { attachActualSampleComputations, extractActualSampleComputations, type TranscriptMessage } from '#lib/sampleComputations'
+import { buildClientResponses } from '#lib/clientResponses'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -15,11 +17,13 @@ export default defineEventHandler(async (event) => {
 
   let session: Record<string, unknown> | null
   let assessment: Record<string, unknown> | null
+  let messages: TranscriptMessage[]
 
   try {
-    ;[session, assessment] = await Promise.all([
+    ;[session, assessment, messages] = await Promise.all([
       convex.query(api.sessions.get, { id: sessionId as Id<'sessions'> }) as Promise<Record<string, unknown> | null>,
-      convex.query(api.assessments.getBySession, { sessionId: sessionId as Id<'sessions'> }) as Promise<Record<string, unknown> | null>
+      convex.query(api.assessments.getBySession, { sessionId: sessionId as Id<'sessions'> }) as Promise<Record<string, unknown> | null>,
+      convex.query(api.messages.list, { sessionId: sessionId as Id<'sessions'> }) as Promise<TranscriptMessage[]>
     ])
   } catch (err) {
     console.error('[public assessments GET] Convex error:', err)
@@ -32,6 +36,24 @@ export default defineEventHandler(async (event) => {
 
   const productSlug = (session.product as string | undefined) ?? 'payroll'
   const assessmentConfig = getConfig(productSlug)
+  let sections = assessment.sections
+
+  if (productSlug === 'payroll') {
+    try {
+      sections = attachActualSampleComputations(
+        {
+          sections: Array.isArray(assessment.sections) ? assessment.sections : [],
+          overallFitScore: Number(assessment.overallFitScore ?? 0),
+          summary: String(assessment.summary ?? ''),
+          recommendations: String(assessment.recommendations ?? ''),
+          consultantNotes: sanitizeConsultantNotes(assessment.consultantNotes)
+        },
+        extractActualSampleComputations(messages)
+      ).sections
+    } catch (err) {
+      console.error('[public assessments GET] Failed to attach actual sample computations:', err)
+    }
+  }
 
   return {
     product: {
@@ -54,8 +76,9 @@ export default defineEventHandler(async (event) => {
       summary: assessment.summary,
       recommendations: assessment.recommendations,
       consultantNotes: sanitizeConsultantNotes(assessment.consultantNotes),
-      sections: assessment.sections
-    }
+      sections
+    },
+    clientResponses: buildClientResponses(messages)
   }
 })
 

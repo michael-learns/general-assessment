@@ -24,12 +24,13 @@ export const payrollConfig: AssessmentConfig = {
         'What pay frequencies do you use (weekly, bi-monthly, monthly, mixed, or others)?',
         'What payroll system are you currently using, and how does your payroll computation process work from cutoff to release?',
         'What are the main pain points in your current payroll computation process?',
+        'Please provide your payroll sample computation as detailed case-by-case scenarios for review. Include the employee type or scenario, cutoff dates, basic pay basis, attendance inputs, overtime or night differential, holidays, allowances, deductions, statutory contributions, tax handling, adjustments, final net pay, and any manual notes or exceptions.',
         'Do you have a mix of full-time fixed-salary, hourly rate, commission-based, or contractor employees?',
         'How do you handle overtime — fixed multiplier or custom rules?',
         'Do any employees have multiple pay rates or split pay?',
         'Are there shift differentials or special pay premiums?'
       ],
-      codealiveSearchHints: ['pay frequency', 'payroll computation', 'payroll import', 'payroll approval', 'overtime', 'salary', 'hourly', 'commission', 'split pay', 'shift differential']
+      codealiveSearchHints: ['pay frequency', 'payroll computation', 'sample computation', 'case-by-case payroll scenarios', 'payroll import', 'payroll approval', 'overtime', 'salary', 'hourly', 'commission', 'split pay', 'shift differential']
     },
     {
       name: 'Timekeeping, Requests & Approvals',

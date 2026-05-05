@@ -3,6 +3,7 @@ export interface AssessmentSection {
   status: 'supported' | 'partial' | 'gap'
   findings: string
   customerRequirements: string[]
+  sampleComputations?: string[]
 }
 
 export interface ConsultantNotes {

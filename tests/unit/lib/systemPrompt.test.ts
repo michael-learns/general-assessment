@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { buildSystemPrompt } from '../../../lib/systemPrompt'
 import { payrollConfig } from '../../../lib/assessments/payroll'
+import { hrmsConfig } from '../../../lib/assessments/hrms'
 
 describe('buildSystemPrompt', () => {
   it('should include company name and industry', () => {
@@ -51,6 +52,22 @@ describe('buildSystemPrompt', () => {
     const prompt = buildSystemPrompt(payrollConfig, 'Test Co', 'Retail')
     expect(prompt).toContain('Company information details already collected')
     expect(prompt).toContain('Employee details already collected about the company')
+  })
+
+  it('should require payroll sample computation details in the conversation and report', () => {
+    const prompt = buildSystemPrompt(payrollConfig, 'Test Co', 'Retail')
+    expect(prompt).toContain('Collect payroll sample computation details')
+    expect(prompt).toContain('case-by-case scenarios')
+    expect(prompt).toContain('final net pay')
+    expect(prompt).toContain('Payroll sample computation scenarios provided by the customer')
+    expect(prompt).toContain('Include every sample computation scenario the customer provided')
+    expect(prompt).toContain('sampleComputations')
+  })
+
+  it('should not add payroll sample computation instructions to other products', () => {
+    const prompt = buildSystemPrompt(hrmsConfig, 'Test Co', 'Retail')
+    expect(prompt).not.toContain('Collect payroll sample computation details')
+    expect(prompt).not.toContain('sampleComputations')
   })
 
   it('should require client-facing YAHSHUA notes without internal grounding fields', () => {

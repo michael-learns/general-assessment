@@ -12,7 +12,8 @@ export const save = mutation({
         v.literal('gap')
       ),
       findings: v.string(),
-      customerRequirements: v.array(v.string())
+      customerRequirements: v.array(v.string()),
+      sampleComputations: v.optional(v.array(v.string()))
     })),
     overallFitScore: v.number(),
     summary: v.string(),

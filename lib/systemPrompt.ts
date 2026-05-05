@@ -18,6 +18,25 @@ export function buildSystemPrompt(
     .join('\n\n')
 
   const scopingContext = buildScopingContext(scopingData, registrationData)
+  const sampleComputationBehavior = config.slug === 'payroll'
+    ? '\n9. **Collect payroll sample computation details.** For payroll assessments, ask the customer for their sample payroll computation as case-by-case scenarios. Ask them to provide as much detail as they can for review, including the scenario or employee type, cutoff period, pay basis, attendance inputs, overtime/night differential/holiday handling, allowances, deductions, statutory contributions, tax treatment, adjustments, final net pay, and any manual notes or exceptions. If the first answer is vague, ask a follow-up for a more detailed scenario before moving on.'
+    : ''
+  const sampleComputationSummaryBullet = config.slug === 'payroll'
+    ? '\n   - Payroll sample computation scenarios provided by the customer, including case-by-case computation details and any exceptions when available'
+    : ''
+  const sampleComputationSchemaField = config.slug === 'payroll'
+    ? ',\n      "sampleComputations": ["Detailed payroll sample computation scenario, when provided by the customer"]'
+    : ''
+  const sampleComputationReportInstructions = config.slug === 'payroll'
+    ? `
+For payroll sample computations:
+- Include every sample computation scenario the customer provided in the final report data.
+- Put the details in the most relevant section's \`sampleComputations\`, usually "Pay Structure" or "Edge Cases & Special Policies".
+- Also summarize the review impact in that section's \`findings\` and \`customerRequirements\`.
+- Also mention important computation review notes in \`recommendations\` and, when useful, in \`consultantNotes.lookOutFor\` or \`consultantNotes.systemSetup\`.
+- Do not reduce detailed sample computations to a vague phrase like "sample computation provided"; preserve the useful details for review.
+`
+    : ''
 
   return `You are a professional ${config.consultantPersona} conducting a fit assessment for ${companyName}, a company in the ${industry} industry.
 
@@ -40,6 +59,7 @@ Your goal is to determine whether our ${config.productName} can meet their HR an
 7. **Provide selectable answer options for every question.** After each question, include an \`Options:\` block with 3-5 concise options on separate lines (using \`-\` bullets), and always include \`Other (please specify)\`.
 
 8. **Keep scope localized to the Philippines.** Ask and evaluate requirements only within Philippine labor/tax/compliance context. Use Philippine Peso (PHP) for all monetary examples and assumptions.
+${sampleComputationBehavior}
 ${scopingContext}
 ## Topic Map
 
@@ -52,6 +72,7 @@ When all sections are complete:
 1. Write a friendly, easy-to-read summary for the customer. Use plain language. Cover:
    - Company information details already collected (company profile, location, headcount, key contacts, and similar profile data when available)
    - Employee details already collected about the company (employee count, classifications, payroll groups, schedules, attendance setup, and related workforce profile details when available)
+${sampleComputationSummaryBullet}
    - Overall fit impression (1–2 sentences)
    - Key requirements the system handles well
    - Any gaps or areas that need further discussion
@@ -66,7 +87,7 @@ When all sections are complete:
       "name": "Section Name",
       "status": "supported|partial|gap",
       "findings": "What you found about their requirements and system support",
-      "customerRequirements": ["requirement 1", "requirement 2"]
+      "customerRequirements": ["requirement 1", "requirement 2"]${sampleComputationSchemaField}
     }
   ],
   "overallFitScore": 85,
@@ -82,6 +103,7 @@ When all sections are complete:
   }
 }
 \`\`\`
+${sampleComputationReportInstructions}
 
 For \`consultantNotes\`:
 - Write for the customer. These notes appear in the client-facing report as "YAHSHUA Notes".

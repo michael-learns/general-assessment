@@ -3,6 +3,7 @@ import { api } from '#convex/_generated/api'
 import type { Id } from '#convex/_generated/dataModel'
 import { parseAssessmentBlock, calculateFitScore } from '#lib/assessmentScorer'
 import { getConfig } from '#lib/assessments/index'
+import { attachActualSampleComputations, extractActualSampleComputations, type TranscriptMessage } from '#lib/sampleComputations'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -43,17 +44,33 @@ export default defineEventHandler(async (event) => {
   }
 
   const convex = new ConvexHttpClient(config.public.convexUrl)
+  let assessmentForReport = assessment
+
+  if (productSlug === 'payroll') {
+    try {
+      const messages = await convex.query(api.messages.list, {
+        sessionId: body.sessionId as Id<'sessions'>
+      }) as TranscriptMessage[]
+
+      assessmentForReport = attachActualSampleComputations(
+        assessment,
+        extractActualSampleComputations(messages)
+      )
+    } catch (err) {
+      console.error('[finalize.post] Failed to attach actual sample computations:', err)
+    }
+  }
 
   // Save assessment to Convex
   let assessmentId: Id<'assessments'>
   try {
     assessmentId = await convex.mutation(api.assessments.save, {
       sessionId: body.sessionId as Id<'sessions'>,
-      sections: assessment.sections,
+      sections: assessmentForReport.sections,
       overallFitScore: fitScore,
-      summary: assessment.summary,
-      recommendations: assessment.recommendations,
-      consultantNotes: sanitizeConsultantNotes(assessment.consultantNotes),
+      summary: assessmentForReport.summary,
+      recommendations: assessmentForReport.recommendations,
+      consultantNotes: sanitizeConsultantNotes(assessmentForReport.consultantNotes),
       product: productSlug
     })
   } catch (err) {
@@ -110,10 +127,10 @@ export default defineEventHandler(async (event) => {
       assessment: {
         id: assessmentId,
         overallFitScore: fitScore,
-        summary: assessment.summary,
-        recommendations: assessment.recommendations,
-        consultantNotes: sanitizeConsultantNotes(assessment.consultantNotes),
-        sections: assessment.sections
+        summary: assessmentForReport.summary,
+        recommendations: assessmentForReport.recommendations,
+        consultantNotes: sanitizeConsultantNotes(assessmentForReport.consultantNotes),
+        sections: assessmentForReport.sections
       },
       links: {
         report: reportUrl
@@ -138,9 +155,9 @@ export default defineEventHandler(async (event) => {
   return {
     assessmentId,
     assessment: {
-      ...assessment,
+      ...assessmentForReport,
       overallFitScore: fitScore,
-      consultantNotes: sanitizeConsultantNotes(assessment.consultantNotes)
+      consultantNotes: sanitizeConsultantNotes(assessmentForReport.consultantNotes)
     }
   }
 })

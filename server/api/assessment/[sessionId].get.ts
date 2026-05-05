@@ -1,6 +1,8 @@
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '#convex/_generated/api'
 import type { Id } from '#convex/_generated/dataModel'
+import { attachActualSampleComputations, extractActualSampleComputations, type TranscriptMessage } from '#lib/sampleComputations'
+import { buildClientResponses } from '#lib/clientResponses'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -14,11 +16,27 @@ export default defineEventHandler(async (event) => {
   const convex = new ConvexHttpClient(config.public.convexUrl)
 
   try {
-    const [session, assessment] = await Promise.all([
+    const [session, assessment, messages] = await Promise.all([
       convex.query(api.sessions.get, { id: sessionId as Id<'sessions'> }),
-      convex.query(api.assessments.getBySession, { sessionId: sessionId as Id<'sessions'> })
+      convex.query(api.assessments.getBySession, { sessionId: sessionId as Id<'sessions'> }),
+      convex.query(api.messages.list, { sessionId: sessionId as Id<'sessions'> }) as Promise<TranscriptMessage[]>
     ])
-    return { session, assessment: sanitizeAssessment(assessment) }
+
+    let assessmentForReport = sanitizeAssessment(assessment)
+    if (((session?.product as string | undefined) ?? 'payroll') === 'payroll' && assessmentForReport) {
+      assessmentForReport = sanitizeAssessment(
+        attachActualSampleComputations(
+          assessmentForReport as any,
+          extractActualSampleComputations(messages)
+        ) as any
+      )
+    }
+
+    return {
+      session,
+      assessment: assessmentForReport,
+      clientResponses: buildClientResponses(messages)
+    }
   } catch (err) {
     console.error('[assessment GET] Failed:', err)
     throw createError({ statusCode: 500, message: 'Failed to fetch assessment' })

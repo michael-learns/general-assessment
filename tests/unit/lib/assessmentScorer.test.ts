@@ -31,6 +31,12 @@ describe('parseAssessmentBlock', () => {
     expect(result?.sections[0].status).toBe('supported')
   })
 
+  it('should parse sample computations when present', () => {
+    const content = '```assessment\n{"overallFitScore": 70, "summary": "s", "recommendations": "r", "sections": [{"name": "Pay Structure", "status": "supported", "findings": "ok", "customerRequirements": ["req1"], "sampleComputations": ["Monthly employee sample with final net pay."]}]}\n```'
+    const result = parseAssessmentBlock(content)
+    expect(result?.sections[0].sampleComputations).toEqual(['Monthly employee sample with final net pay.'])
+  })
+
   it('should parse client-facing YAHSHUA notes when present', () => {
     const content = '```assessment\n{"overallFitScore": 70, "summary": "s", "recommendations": "r", "sections": [], "consultantNotes": {"lookOutFor": ["risk"], "systemSetup": ["setup"]}}\n```'
     const result = parseAssessmentBlock(content)

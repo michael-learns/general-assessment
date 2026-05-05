@@ -11,6 +11,7 @@ interface AssessmentSection {
   status: SectionStatus
   findings: string
   customerRequirements?: string[]
+  sampleComputations?: string[]
 }
 
 interface ConsultantNotes {
@@ -18,6 +19,12 @@ interface ConsultantNotes {
   systemSetup: string[]
   followUpQuestions?: string[]
   codealiveGrounding?: string[]
+}
+
+interface ClientResponse {
+  prompt: string
+  response: string
+  timestamp?: number
 }
 
 interface ScopingData {
@@ -70,6 +77,7 @@ interface AssessmentData {
     consultantNotes?: ConsultantNotes
     sections: AssessmentSection[]
   } | null
+  clientResponses?: ClientResponse[]
 }
 
 const route = useRoute()
@@ -95,13 +103,6 @@ const statusConfig: Record<SectionStatus, { color: 'success' | 'warning' | 'erro
   supported: { color: 'success', icon: 'i-lucide-check-circle-2', label: 'Supported' },
   partial: { color: 'warning', icon: 'i-lucide-alert-circle', label: 'Partial Support' },
   gap: { color: 'error', icon: 'i-lucide-x-circle', label: 'Gap' }
-}
-
-function getFitLabel(score: number) {
-  if (score >= 80) return { label: 'Strong Fit', color: 'success' as const }
-  if (score >= 60) return { label: 'Good Fit', color: 'primary' as const }
-  if (score >= 40) return { label: 'Partial Fit', color: 'warning' as const }
-  return { label: 'Poor Fit', color: 'error' as const }
 }
 
 function downloadReport() {
@@ -175,6 +176,17 @@ const employeeDetails = computed(() => {
   ].filter(detail => Boolean(detail.value))
 })
 
+const clientResponses = computed(() => data.value?.clientResponses ?? [])
+
+function formatTimestamp(timestamp?: number) {
+  if (!timestamp) return ''
+
+  return new Intl.DateTimeFormat('en-PH', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(new Date(timestamp))
+}
+
 watchEffect(() => {
   const session = data.value?.session
   if (!session?.companyName || !session.industry) return
@@ -213,46 +225,6 @@ watchEffect(() => {
           {{ data.session.companyName }} &middot; {{ data.session.industry }}
         </p>
       </div>
-
-      <!-- Fit Score Card -->
-      <UCard>
-        <div class="flex items-center justify-between gap-4">
-          <div>
-            <p class="text-sm text-gray-500 mb-1">Overall Fit Score</p>
-            <p class="text-5xl font-bold tracking-tight">
-              {{ data.assessment.overallFitScore }}
-              <span class="text-2xl font-normal text-gray-400">/100</span>
-            </p>
-            <UBadge
-              :color="getFitLabel(data.assessment.overallFitScore).color"
-              class="mt-3"
-              size="md"
-            >
-              {{ getFitLabel(data.assessment.overallFitScore).label }}
-            </UBadge>
-          </div>
-          <!-- Circular score indicator -->
-          <svg viewBox="0 0 36 36" class="w-28 h-28 -rotate-90 shrink-0">
-            <circle
-              cx="18" cy="18" r="15.9"
-              fill="none" stroke="currentColor" stroke-width="2.5"
-              class="text-gray-200 dark:text-gray-700"
-            />
-            <circle
-              cx="18" cy="18" r="15.9"
-              fill="none" stroke="currentColor" stroke-width="2.5"
-              stroke-linecap="round"
-              :stroke-dasharray="`${data.assessment.overallFitScore} 100`"
-              :class="{
-                'text-green-500': data.assessment.overallFitScore >= 80,
-                'text-blue-500': data.assessment.overallFitScore >= 60 && data.assessment.overallFitScore < 80,
-                'text-yellow-500': data.assessment.overallFitScore >= 40 && data.assessment.overallFitScore < 60,
-                'text-red-500': data.assessment.overallFitScore < 40
-              }"
-            />
-          </svg>
-        </div>
-      </UCard>
 
       <!-- Summary -->
       <UCard>
@@ -294,6 +266,34 @@ watchEffect(() => {
         </dl>
       </UCard>
 
+      <UCard v-if="clientResponses.length">
+        <template #header>
+          <h2 class="font-semibold text-base">Client Responses</h2>
+        </template>
+        <div class="space-y-3">
+          <article
+            v-for="(item, index) in clientResponses"
+            :key="`${index}-${item.timestamp || item.response}`"
+            class="rounded-xl border border-gray-100 dark:border-gray-800 p-4"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Response {{ index + 1 }}
+              </p>
+              <time v-if="item.timestamp" class="text-xs text-gray-400">
+                {{ formatTimestamp(item.timestamp) }}
+              </time>
+            </div>
+            <p class="mt-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+              {{ item.prompt }}
+            </p>
+            <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-800 dark:text-gray-200">
+              {{ item.response }}
+            </p>
+          </article>
+        </div>
+      </UCard>
+
       <!-- Section Breakdown -->
       <UCard>
         <template #header>
@@ -323,6 +323,18 @@ watchEffect(() => {
                 {{ req }}
               </li>
             </ul>
+            <div v-if="section.sampleComputations?.length" class="space-y-2 pt-2">
+              <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Sample Payroll Computations</h4>
+              <ul class="space-y-2">
+                <li
+                  v-for="sample in section.sampleComputations"
+                  :key="sample"
+                  class="whitespace-pre-line rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 p-3 text-xs leading-relaxed text-gray-600 dark:text-gray-300"
+                >
+                  {{ sample }}
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </UCard>

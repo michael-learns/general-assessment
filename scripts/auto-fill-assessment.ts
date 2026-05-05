@@ -104,6 +104,12 @@ const fallbackAnswers = [
   'We need accurate payroll, reports, and less manual work.'
 ]
 
+const sampleComputationAnswer = [
+  'Sample case 1: Regular monthly employee, PHP 30,000 monthly salary, semi-monthly payroll for the 1st to 15th cutoff. Basic pay is PHP 15,000 for the cutoff. The employee had 1 unpaid day, 2 approved overtime hours on a regular day, no holiday work, PHP 1,500 taxable allowance, PHP 500 de minimis allowance, standard SSS/PHIC/HDMF employee shares, withholding tax based on taxable compensation, and PHP 1,000 loan deduction. Net pay is reviewed manually after statutory and loan deductions.',
+  'Sample case 2: Daily-paid plant employee, PHP 900 daily rate, 12 paid days in the cutoff, 1 regular holiday worked, 4 approved night differential hours, meal allowance of PHP 100 per worked day, standard government deductions, and tax computed on taxable gross. Payroll manually checks holiday premium, night differential, and attendance exceptions before final net pay.',
+  'Sample case 3: Resigned employee final pay. The employee has prorated basic pay up to last working day, unused leave conversion, late/undertime deductions, loan balance deduction, statutory contribution checks, tax annualization/final withholding review, and clearance-related manual notes before release.'
+].join('\n\n')
+
 async function createSession() {
   const response = await fetch(`${BASE_URL}/api/sessions`, {
     method: 'POST',
@@ -160,6 +166,10 @@ function parseAnswerOptions(content: string): string[] {
 }
 
 function pickAnswer(message: string, turn: number) {
+  if (/sample\s+.*computation|case-by-case|final net pay/i.test(message)) {
+    return sampleComputationAnswer
+  }
+
   const options = parseAnswerOptions(message)
   if (options.length > 0) {
     const choice = options.find(option => !/other/i.test(option)) || options[0]

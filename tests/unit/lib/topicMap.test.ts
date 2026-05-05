@@ -22,6 +22,17 @@ describe('payrollConfig sections', () => {
     expect(typeof section?.requiredQuestions[0]).toBe('string')
   })
 
+  it('should ask for detailed payroll sample computations', () => {
+    const section = payrollConfig.sections.find(s => s.name === 'Pay Structure')
+    const questions = section?.requiredQuestions.join(' ') ?? ''
+    const hints = section?.codealiveSearchHints.join(' ') ?? ''
+
+    expect(questions).toContain('payroll sample computation')
+    expect(questions).toContain('case-by-case scenarios')
+    expect(questions).toContain('final net pay')
+    expect(hints).toContain('sample computation')
+  })
+
   it('should ask about timekeeping, requests, approvals, and pain points', () => {
     const section = payrollConfig.sections.find(s => s.name === 'Timekeeping, Requests & Approvals')
     const questions = section?.requiredQuestions.join(' ') ?? ''
