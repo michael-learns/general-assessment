@@ -53,6 +53,12 @@ export default defineSchema({
     overallFitScore: v.number(),
     summary: v.string(),
     recommendations: v.string(),
+    consultantNotes: v.optional(v.object({
+      lookOutFor: v.array(v.string()),
+      systemSetup: v.array(v.string()),
+      followUpQuestions: v.optional(v.array(v.string())),
+      codealiveGrounding: v.optional(v.array(v.string()))
+    })),
     webhookSent: v.boolean(),
     createdAt: v.number(),
     product: v.optional(v.string())

@@ -22,12 +22,26 @@ export const payrollConfig: AssessmentConfig = {
       name: 'Pay Structure',
       requiredQuestions: [
         'What pay frequencies do you use (weekly, bi-monthly, monthly, mixed, or others)?',
+        'What payroll system are you currently using, and how does your payroll computation process work from cutoff to release?',
+        'What are the main pain points in your current payroll computation process?',
         'Do you have a mix of full-time fixed-salary, hourly rate, commission-based, or contractor employees?',
         'How do you handle overtime — fixed multiplier or custom rules?',
         'Do any employees have multiple pay rates or split pay?',
         'Are there shift differentials or special pay premiums?'
       ],
-      codealiveSearchHints: ['pay frequency', 'overtime', 'salary', 'hourly', 'commission', 'split pay', 'shift differential']
+      codealiveSearchHints: ['pay frequency', 'payroll computation', 'payroll import', 'payroll approval', 'overtime', 'salary', 'hourly', 'commission', 'split pay', 'shift differential']
+    },
+    {
+      name: 'Timekeeping, Requests & Approvals',
+      requiredQuestions: [
+        'How do you currently handle timekeeping, and what is the end-to-end process before payroll?',
+        'What are the main timekeeping pain points or manual workarounds?',
+        'How do employees file requests or applications such as leave, overtime, undertime, missed logs, or schedule changes?',
+        'What pain points do you experience with request or application filing?',
+        'How are those requests approved, and who validates them before payroll?',
+        'What pain points do you experience with approvals before cutoff?'
+      ],
+      codealiveSearchHints: ['timekeeping', 'attendance import', 'biometric logs', 'leave request', 'overtime approval', 'approval workflow', 'missed logs']
     },
     {
       name: 'Leave & Benefits',

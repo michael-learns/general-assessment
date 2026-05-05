@@ -19,69 +19,140 @@ function getStatus(section: string, currentSection: string, completedSections: s
 </script>
 
 <template>
-  <div class="space-y-3">
-    <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-      Assessment Progress
-    </h2>
+  <div>
+    <div class="panel-title">Assessment Progress</div>
 
-    <div class="space-y-1">
+    <div class="stage-list">
       <button
         v-for="section in sections"
         :key="section"
         type="button"
-        class="w-full flex items-center gap-3 py-2 px-3 rounded-lg transition-all duration-200 text-left"
-        :class="{
-          'bg-primary-50 dark:bg-primary-950/50': getStatus(section, currentSection, completedSections) === 'active',
-          'opacity-50': getStatus(section, currentSection, completedSections) === 'pending',
-          'hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer': !disabled
-        }"
+        :class="['stage', `stage--${getStatus(section, currentSection, completedSections)}`]"
         :disabled="disabled"
         @click="emit('jumpToSection', section)"
       >
-        <div class="w-5 h-5 shrink-0 flex items-center justify-center">
-          <UIcon
-            v-if="getStatus(section, currentSection, completedSections) === 'completed'"
-            name="i-lucide-check-circle-2"
-            class="text-green-500 w-5 h-5"
-          />
-          <div
-            v-else-if="getStatus(section, currentSection, completedSections) === 'active'"
-            class="w-3 h-3 rounded-full bg-primary-500 ring-2 ring-primary-200 dark:ring-primary-800"
-          />
-          <div
-            v-else
-            class="w-3 h-3 rounded-full border-2 border-gray-300 dark:border-gray-600"
-          />
-        </div>
-
-        <span
-          class="text-sm transition-all"
-          :class="getStatus(section, currentSection, completedSections) === 'active'
-            ? 'font-semibold text-primary-600 dark:text-primary-400'
-            : 'text-gray-700 dark:text-gray-300'"
-        >
-          {{ section }}
+        <span :class="['stage-dot', `stage-dot--${getStatus(section, currentSection, completedSections)}`]">
+          <svg v-if="getStatus(section, currentSection, completedSections) === 'completed'" viewBox="0 0 16 16" width="11" height="11" fill="none">
+            <path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
         </span>
+        <span class="stage-label">{{ section }}</span>
       </button>
     </div>
 
-    <Transition name="fade">
-      <div
-        v-if="isCheckingFeature"
-        class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 pt-3 border-t border-gray-100 dark:border-gray-800"
-      >
-        <UIcon name="i-lucide-search" class="w-3 h-3 animate-pulse text-primary-400" />
-        <span>Checking feature support...</span>
+    <Transition name="slide-fade">
+      <div v-if="isCheckingFeature" class="checking-banner">
+        <svg viewBox="0 0 20 20" width="13" height="13" fill="none" class="checking-icon">
+          <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
+          <path d="M6 10l3 3 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Checking feature support…
       </div>
     </Transition>
   </div>
 </template>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
+.panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ap-ink-4, #86868b);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
 }
-.fade-enter-from, .fade-leave-to {
+
+.stage-list { display: flex; flex-direction: column; gap: 2px; }
+
+.stage {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  text-align: left;
+  width: 100%;
+  transition: background 0.2s ease, color 0.2s ease;
+  color: var(--ap-ink-4, #86868b);
+}
+
+.stage--active {
+  background: var(--ap-accent-tint, rgba(0, 113, 227, 0.10));
+  color: var(--ap-accent, #0071e3);
+  font-weight: 600;
+}
+
+.stage--completed {
+  color: var(--ap-ink-2, #424245);
+}
+
+.stage--pending {
+  color: var(--ap-ink-4, #86868b);
+}
+
+.stage:hover:not(:disabled):not(.stage--active) {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--ap-ink-2, #424245);
+}
+
+.stage:disabled { cursor: default; }
+
+.stage-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ap-hairline-strong, rgba(0, 0, 0, 0.14));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.2s ease;
+  color: #fff;
+}
+
+.stage-dot--active {
+  border-color: var(--ap-accent, #0071e3);
+  box-shadow: 0 0 0 4px var(--ap-accent-tint, rgba(0, 113, 227, 0.10));
+}
+
+.stage-dot--completed {
+  background: var(--ap-accent, #0071e3);
+  border-color: var(--ap-accent, #0071e3);
+}
+
+.stage-label { line-height: 1.35; }
+
+/* Checking feature banner */
+.checking-banner {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--ap-ink-3, #6e6e73);
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ap-hairline, rgba(0, 0, 0, 0.08));
+}
+
+.checking-icon {
+  animation: ap-shimmer 1.2s ease-in-out infinite;
+  color: var(--ap-accent, #0071e3);
+}
+
+/* Transition */
+.slide-fade-enter-active, .slide-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.slide-fade-enter-from, .slide-fade-leave-to {
   opacity: 0;
+  transform: translateY(-4px);
 }
 </style>

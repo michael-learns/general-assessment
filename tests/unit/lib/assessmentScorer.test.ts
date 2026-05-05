@@ -30,6 +30,25 @@ describe('parseAssessmentBlock', () => {
     expect(result?.sections[0].name).toBe('Pay Structure')
     expect(result?.sections[0].status).toBe('supported')
   })
+
+  it('should parse client-facing YAHSHUA notes when present', () => {
+    const content = '```assessment\n{"overallFitScore": 70, "summary": "s", "recommendations": "r", "sections": [], "consultantNotes": {"lookOutFor": ["risk"], "systemSetup": ["setup"]}}\n```'
+    const result = parseAssessmentBlock(content)
+    expect(result?.consultantNotes?.lookOutFor).toEqual(['risk'])
+    expect(result?.consultantNotes?.systemSetup).toEqual(['setup'])
+  })
+
+  it('should still parse legacy consultant note fields', () => {
+    const content = '```assessment\n{"overallFitScore": 70, "summary": "s", "recommendations": "r", "sections": [], "consultantNotes": {"lookOutFor": ["risk"], "followUpQuestions": ["question"], "systemSetup": ["setup"], "codealiveGrounding": ["grounded"]}}\n```'
+    const result = parseAssessmentBlock(content)
+    expect(result?.consultantNotes?.followUpQuestions).toEqual(['question'])
+    expect(result?.consultantNotes?.codealiveGrounding).toEqual(['grounded'])
+  })
+
+  it('should reject malformed consultant notes', () => {
+    const content = '```assessment\n{"overallFitScore": 70, "summary": "s", "recommendations": "r", "sections": [], "consultantNotes": {"lookOutFor": "risk", "systemSetup": []}}\n```'
+    expect(parseAssessmentBlock(content)).toBeNull()
+  })
 })
 
 describe('calculateFitScore', () => {

@@ -18,9 +18,28 @@ export default defineEventHandler(async (event) => {
       convex.query(api.sessions.get, { id: sessionId as Id<'sessions'> }),
       convex.query(api.assessments.getBySession, { sessionId: sessionId as Id<'sessions'> })
     ])
-    return { session, assessment }
+    return { session, assessment: sanitizeAssessment(assessment) }
   } catch (err) {
     console.error('[assessment GET] Failed:', err)
     throw createError({ statusCode: 500, message: 'Failed to fetch assessment' })
   }
 })
+
+function sanitizeAssessment<T extends Record<string, unknown> | null>(assessment: T) {
+  if (!assessment) return assessment
+
+  return {
+    ...assessment,
+    consultantNotes: sanitizeConsultantNotes(assessment.consultantNotes)
+  }
+}
+
+function sanitizeConsultantNotes(value: unknown) {
+  if (!value || typeof value !== 'object') return undefined
+  const notes = value as Record<string, unknown>
+
+  return {
+    lookOutFor: Array.isArray(notes.lookOutFor) ? notes.lookOutFor.filter(item => typeof item === 'string') : [],
+    systemSetup: Array.isArray(notes.systemSetup) ? notes.systemSetup.filter(item => typeof item === 'string') : []
+  }
+}

@@ -1,4 +1,14 @@
-import { GoogleGenerativeAI, type Tool, SchemaType } from '@google/generative-ai'
+import {
+  GoogleGenAI,
+  ThinkingLevel,
+  createModelContent,
+  createPartFromFunctionResponse,
+  createUserContent,
+  type Content,
+  type FunctionCall,
+  type Part,
+  type Tool
+} from '@google/genai'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '#convex/_generated/api'
 import type { Id } from '#convex/_generated/dataModel'
@@ -10,6 +20,7 @@ type ChatMessage = { role: 'user' | 'model'; content: string }
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
+  const geminiModel = config.geminiModel || 'gemini-3-flash-preview'
   const body = await readBody<{
     sessionId: string
     companyName: string
@@ -37,11 +48,11 @@ export default defineEventHandler(async (event) => {
         {
           name: 'codealive_search',
           description: assessmentConfig.codeAliveSearchDescription,
-          parameters: {
-            type: SchemaType.OBJECT,
+          parametersJsonSchema: {
+            type: 'object',
             properties: {
               query: {
-                type: SchemaType.STRING,
+                type: 'string',
                 description: 'The feature or policy to search for, e.g. "split pay rates", "overtime calculation", "leave accrual"'
               }
             },
@@ -51,11 +62,11 @@ export default defineEventHandler(async (event) => {
         {
           name: 'codealive_consultant',
           description: assessmentConfig.codeAliveConsultantDescription,
-          parameters: {
-            type: SchemaType.OBJECT,
+          parametersJsonSchema: {
+            type: 'object',
             properties: {
               question: {
-                type: SchemaType.STRING,
+                type: 'string',
                 description: 'The specific question about system capability'
               }
             },
@@ -121,25 +132,34 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const genAI = new GoogleGenerativeAI(config.geminiApiKey)
-  const model = genAI.getGenerativeModel({
-    model: config.geminiModel || 'gemini-2.5-flash-preview-04-17',
-    systemInstruction: buildSystemPrompt(
-      assessmentConfig,
-      body.companyName || 'the customer',
-      body.industry || 'their industry',
-      sessionScopingData,
-      sessionRegistrationData
-    ),
-    tools: CODEALIVE_TOOLS
+  const ai = new GoogleGenAI({ apiKey: config.geminiApiKey })
+  const history: Content[] = (body.messages || []).map(m => (
+    m.role === 'user'
+      ? createUserContent(m.content)
+      : createModelContent(m.content)
+  ))
+
+  const chat = ai.chats.create({
+    model: geminiModel,
+    history,
+    config: {
+      systemInstruction: buildSystemPrompt(
+        assessmentConfig,
+        body.companyName || 'the customer',
+        body.industry || 'their industry',
+        sessionScopingData,
+        sessionRegistrationData
+      ),
+      tools: CODEALIVE_TOOLS,
+      ...(geminiModel.startsWith('gemini-3')
+        ? {
+            thinkingConfig: {
+              thinkingLevel: ThinkingLevel.LOW
+            }
+          }
+        : {})
+    }
   })
-
-  const history = (body.messages || []).map(m => ({
-    role: m.role,
-    parts: [{ text: m.content }]
-  }))
-
-  const chat = model.startChat({ history })
   const encoder = new TextEncoder()
 
   const stream = new ReadableStream({
@@ -152,17 +172,18 @@ export default defineEventHandler(async (event) => {
       }
 
       // Process one stream, handling any function calls, accumulating text
-      async function processStream(streamResult: ReturnType<typeof chat.sendMessageStream>) {
-        const pendingCalls: Array<{ name: string; args: Record<string, string> }> = []
+      async function processStream(message: string | Part[]) {
+        const pendingCalls: FunctionCall[] = []
 
-        for await (const chunk of (await streamResult).stream) {
-          const calls = chunk.functionCalls()
+        const stream = await chat.sendMessageStream({ message })
+
+        for await (const chunk of stream) {
+          const calls = chunk.functionCalls
           if (calls && calls.length > 0) {
-            for (const call of calls) {
-              pendingCalls.push({ name: call.name, args: call.args as Record<string, string> })
-            }
+            pendingCalls.push(...calls)
           }
-          const text = chunk.text()
+
+          const text = chunk.text
           if (text) {
             fullResponse += text
             send({ type: 'text', content: text })
@@ -170,26 +191,29 @@ export default defineEventHandler(async (event) => {
         }
 
         if (pendingCalls.length > 0) {
-          const functionResponses = []
-          for (const call of pendingCalls) {
-            const query = call.args.query || call.args.question || ''
+          const functionResponses = pendingCalls.map((call, index) => {
+            const args = (call.args || {}) as Record<string, string>
+            const query = args.query || args.question || ''
             codealiveQueries.push(`${call.name}: ${query}`)
             send({ type: 'tool_call', tool: call.name, query })
 
             const caTool = call.name === 'codealive_search' ? 'codebase_search' as const : 'codebase_consultant' as const
-            const toolResult = await callCodealive(config.codeAliveApiKey, caTool, call.args)
+            return callCodealive(config.codeAliveApiKey, caTool, args).then((toolResult) => (
+              createPartFromFunctionResponse(
+                call.id || `${call.name}-${index}`,
+                call.name || 'unknown_tool',
+                { result: toolResult }
+              )
+            ))
+          })
 
-            functionResponses.push({
-              functionResponse: { name: call.name, response: { result: toolResult } }
-            })
-          }
-          // Recurse to handle potential chained function calls
-          await processStream(chat.sendMessageStream(functionResponses))
+          const functionResponseMessage = createUserContent(await Promise.all(functionResponses))
+          await processStream(functionResponseMessage.parts || [])
         }
       }
 
       try {
-        await processStream(chat.sendMessageStream(body.userMessage))
+        await processStream(body.userMessage)
 
         // Save assistant message
         if (convex && fullResponse) {

@@ -1,2 +1,43 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+/* Apple Design System — shared CSS custom properties */
+:root {
+  --ap-bg: #f5f5f7;
+  --ap-elev: #ffffff;
+  --ap-sunken: #fafafc;
+  --ap-ink: #1d1d1f;
+  --ap-ink-2: #424245;
+  --ap-ink-3: #6e6e73;
+  --ap-ink-4: #86868b;
+  --ap-hairline: rgba(0, 0, 0, 0.08);
+  --ap-hairline-strong: rgba(0, 0, 0, 0.14);
+  --ap-accent: #0071e3;
+  --ap-accent-hover: #0077ed;
+  --ap-accent-press: #006edb;
+  --ap-accent-tint: rgba(0, 113, 227, 0.10);
+  --ap-accent-tint-strong: rgba(0, 113, 227, 0.16);
+  --ap-danger: #ff3b30;
+  --ap-success: #30d158;
+  --ap-shadow-card: 0 1px 0 rgba(0, 0, 0, 0.04), 0 24px 48px -16px rgba(0, 0, 0, 0.08), 0 6px 16px -8px rgba(0, 0, 0, 0.06);
+  --ap-shadow-pop: 0 24px 60px -20px rgba(0, 0, 0, 0.18), 0 8px 20px -10px rgba(0, 0, 0, 0.10);
+  --ap-radius-card: 22px;
+  --ap-radius-field: 12px;
+}
+
+@keyframes ap-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ap-pop {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes ap-shimmer {
+  0%   { opacity: 0.35; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.35; }
+}
+
+.ap-fade-up { animation: ap-fade-up 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ap-pop-in  { animation: ap-pop 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both; }

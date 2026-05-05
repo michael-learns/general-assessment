@@ -53,7 +53,18 @@ export default defineEventHandler(async (event) => {
       overallFitScore: assessment.overallFitScore,
       summary: assessment.summary,
       recommendations: assessment.recommendations,
+      consultantNotes: sanitizeConsultantNotes(assessment.consultantNotes),
       sections: assessment.sections
     }
   }
 })
+
+function sanitizeConsultantNotes(value: unknown) {
+  if (!value || typeof value !== 'object') return undefined
+  const notes = value as Record<string, unknown>
+
+  return {
+    lookOutFor: Array.isArray(notes.lookOutFor) ? notes.lookOutFor.filter(item => typeof item === 'string') : [],
+    systemSetup: Array.isArray(notes.systemSetup) ? notes.systemSetup.filter(item => typeof item === 'string') : []
+  }
+}

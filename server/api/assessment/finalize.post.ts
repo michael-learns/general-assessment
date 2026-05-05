@@ -53,6 +53,7 @@ export default defineEventHandler(async (event) => {
       overallFitScore: fitScore,
       summary: assessment.summary,
       recommendations: assessment.recommendations,
+      consultantNotes: sanitizeConsultantNotes(assessment.consultantNotes),
       product: productSlug
     })
   } catch (err) {
@@ -111,6 +112,7 @@ export default defineEventHandler(async (event) => {
         overallFitScore: fitScore,
         summary: assessment.summary,
         recommendations: assessment.recommendations,
+        consultantNotes: sanitizeConsultantNotes(assessment.consultantNotes),
         sections: assessment.sections
       },
       links: {
@@ -135,6 +137,20 @@ export default defineEventHandler(async (event) => {
 
   return {
     assessmentId,
-    assessment: { ...assessment, overallFitScore: fitScore }
+    assessment: {
+      ...assessment,
+      overallFitScore: fitScore,
+      consultantNotes: sanitizeConsultantNotes(assessment.consultantNotes)
+    }
   }
 })
+
+function sanitizeConsultantNotes(value: unknown) {
+  if (!value || typeof value !== 'object') return undefined
+  const notes = value as Record<string, unknown>
+
+  return {
+    lookOutFor: Array.isArray(notes.lookOutFor) ? notes.lookOutFor.filter(item => typeof item === 'string') : [],
+    systemSetup: Array.isArray(notes.systemSetup) ? notes.systemSetup.filter(item => typeof item === 'string') : []
+  }
+}
