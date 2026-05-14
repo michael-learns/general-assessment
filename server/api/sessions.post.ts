@@ -70,10 +70,6 @@ export default defineEventHandler(async (event) => {
             email: body.email.trim(),
             firstName,
             lastName,
-            jobTitle: body.contactPosition || undefined,
-            phone: body.contactPhone || undefined,
-            companyName: body.companyName.trim(),
-            industry: body.industry.trim(),
             source: 'assessment-form',
           }),
         })
