@@ -55,29 +55,36 @@ export default defineEventHandler(async (event) => {
       contactPhone: body.contactPhone?.trim() || undefined,
     })
     // Fire-and-forget: sync contact to Loops.so
+    console.log('[loops] loopsApiKey set:', !!config.loopsApiKey, '| email:', body.email)
     if (config.loopsApiKey && body.email?.trim()) {
       const nameParts = (body.contactPerson || body.contactName || '').trim().split(' ')
       const firstName = nameParts[0] || undefined
       const lastName = nameParts.slice(1).join(' ') || undefined
+      const loopsPayload = {
+        email: body.email.trim(),
+        firstName,
+        lastName,
+        jobTitle: body.contactPosition || undefined,
+        phone: body.contactPhone || undefined,
+        companyName: body.companyName.trim(),
+        industry: body.industry.trim(),
+        source: 'assessment-form',
+      }
+      console.log('[loops] sending payload:', JSON.stringify(loopsPayload))
       $fetch('https://app.loops.so/api/v1/contacts/upsert', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${config.loopsApiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: body.email.trim(),
-          firstName,
-          lastName,
-          jobTitle: body.contactPosition || undefined,
-          phone: body.contactPhone || undefined,
-          companyName: body.companyName.trim(),
-          industry: body.industry.trim(),
-          source: 'assessment-form',
-        }),
+        body: JSON.stringify(loopsPayload),
+      }).then((res) => {
+        console.log('[loops] success:', JSON.stringify(res))
       }).catch((err: any) => {
-        console.error('[sessions.post] Loops.so sync failed:', err?.message || err)
+        console.error('[loops] failed:', err?.message || err)
       })
+    } else {
+      console.log('[loops] skipped — missing key or email')
     }
 
     return { sessionId }
