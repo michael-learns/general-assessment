@@ -54,28 +54,26 @@ export default defineEventHandler(async (event) => {
       contactPosition: body.contactPosition?.trim() || undefined,
       contactPhone: body.contactPhone?.trim() || undefined,
     })
-    // Sync contact to Loops.so
-    if (config.loopsApiKey && body.email?.trim()) {
-      const nameParts = (body.contactPerson || body.contactName || '').trim().split(' ')
-      const firstName = nameParts[0] || undefined
-      const lastName = nameParts.slice(1).join(' ') || undefined
-      try {
-        await $fetch('https://app.loops.so/api/v1/contacts/upsert', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${config.loopsApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: body.email.trim(),
-            firstName,
-            lastName,
-            source: 'assessment-form',
-          }),
-        })
-      } catch (err: any) {
-        console.error('[loops] failed:', err?.message || err)
-      }
+    // Sync contact to Loops.so (always attempt so we can see it in Vercel External APIs)
+    const nameParts = (body.contactPerson || body.contactName || '').trim().split(' ')
+    const firstName = nameParts[0] || undefined
+    const lastName = nameParts.slice(1).join(' ') || undefined
+    try {
+      await $fetch('https://app.loops.so/api/v1/contacts/upsert', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${config.loopsApiKey || 'missing'}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: body.email?.trim() || 'noemail@test.com',
+          firstName,
+          lastName,
+          source: 'assessment-form',
+        }),
+      })
+    } catch (err: any) {
+      console.error('[loops] failed:', err?.message || err)
     }
 
     return { sessionId }
