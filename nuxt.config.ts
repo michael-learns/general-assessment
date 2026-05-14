@@ -21,6 +21,7 @@ export default defineNuxtConfig({
     geminiModel: 'gemini-3-flash-preview',
     codeAliveApiKey: '',
     assessmentWebhookUrl: '',
+    loopsApiKey: '',
     public: {
       convexUrl: '',
       demoBookingUrl: 'https://calendar.app.google/ZaTDPhES2ZuLGji48'

@@ -54,6 +54,32 @@ export default defineEventHandler(async (event) => {
       contactPosition: body.contactPosition?.trim() || undefined,
       contactPhone: body.contactPhone?.trim() || undefined,
     })
+    // Fire-and-forget: sync contact to Loops.so
+    if (config.loopsApiKey && body.email?.trim()) {
+      const nameParts = (body.contactPerson || body.contactName || '').trim().split(' ')
+      const firstName = nameParts[0] || undefined
+      const lastName = nameParts.slice(1).join(' ') || undefined
+      $fetch('https://app.loops.so/api/v1/contacts/upsert', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${config.loopsApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: body.email.trim(),
+          firstName,
+          lastName,
+          jobTitle: body.contactPosition || undefined,
+          phone: body.contactPhone || undefined,
+          companyName: body.companyName.trim(),
+          industry: body.industry.trim(),
+          source: 'assessment-form',
+        }),
+      }).catch((err: any) => {
+        console.error('[sessions.post] Loops.so sync failed:', err?.message || err)
+      })
+    }
+
     return { sessionId }
   } catch (error: any) {
     const msg = error?.message || error?.data || String(error)
