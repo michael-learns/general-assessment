@@ -15,11 +15,9 @@ export default defineEventHandler(async (event) => {
     address?: string
     tin?: string
     numberOfEmployees?: number
-    authorizedSignatory?: string
-    signatoryPosition?: string
     contactPerson?: string
-    contactPosition?: string
     contactPhone?: string
+    userName?: string
   }>(event)
 
   if (!body.companyName?.trim() || !body.industry?.trim()) {
@@ -48,14 +46,12 @@ export default defineEventHandler(async (event) => {
       address: body.address?.trim() || undefined,
       tin: body.tin?.trim() || undefined,
       numberOfEmployees: body.numberOfEmployees || undefined,
-      authorizedSignatory: body.authorizedSignatory?.trim() || undefined,
-      signatoryPosition: body.signatoryPosition?.trim() || undefined,
       contactPerson: body.contactPerson?.trim() || undefined,
-      contactPosition: body.contactPosition?.trim() || undefined,
       contactPhone: body.contactPhone?.trim() || undefined,
+      userName: body.userName?.trim() || undefined,
     })
     // Sync contact to Loops.so (always attempt so we can see it in Vercel External APIs)
-    const nameParts = (body.contactPerson || body.contactName || '').trim().split(' ')
+    const nameParts = (body.userName || body.contactPerson || body.contactName || '').trim().split(' ')
     const firstName = nameParts[0] || undefined
     const lastName = nameParts.slice(1).join(' ') || undefined
     const loopsEmail = body.email?.trim() || 'noemail@test.com'

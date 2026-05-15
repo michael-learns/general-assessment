@@ -20,11 +20,9 @@ export default defineSchema({
     address: v.optional(v.string()),
     tin: v.optional(v.string()),
     numberOfEmployees: v.optional(v.number()),
-    authorizedSignatory: v.optional(v.string()),
-    signatoryPosition: v.optional(v.string()),
     contactPerson: v.optional(v.string()),
-    contactPosition: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
+    userName: v.optional(v.string()),
     // Scoping form data
     scopingData: v.optional(v.any()),
     scopingCompleted: v.optional(v.boolean()),

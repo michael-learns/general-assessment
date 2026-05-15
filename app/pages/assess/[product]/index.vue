@@ -36,7 +36,8 @@ const form = reactive({
   numberOfEmployees: undefined as number | undefined,
   contactPerson: '',
   contactPhone: '',
-  // Existing
+  // User
+  userName: (query.name as string) || '',
   email: (query.email as string) || '',
   dataPrivacyConsent: false
 })
@@ -59,7 +60,7 @@ const loading = ref(false)
 const submitError = ref('')
 
 type FieldKey = 'companyName' | 'industry' | 'otherIndustry' | 'address' | 'tin' |
-  'numberOfEmployees' | 'contactPerson' | 'contactPhone' | 'email'
+  'numberOfEmployees' | 'contactPerson' | 'contactPhone' | 'userName' | 'email'
 
 const fieldErrors = reactive<Partial<Record<FieldKey, string>>>({})
 const touched = reactive<Partial<Record<FieldKey, boolean>>>({})
@@ -94,6 +95,9 @@ function validateField(field: FieldKey) {
       fieldErrors.numberOfEmployees = (form.numberOfEmployees && form.numberOfEmployees >= 1)
         ? '' : 'Enter a valid number of employees.'
       break
+    case 'userName':
+      fieldErrors.userName = str ? '' : 'Your name is required.'
+      break
     case 'contactPerson':
       fieldErrors.contactPerson = str ? '' : 'Contact person name is required.'
       break
@@ -118,7 +122,7 @@ function touchAndValidate(field: FieldKey) {
 function validateAll(): boolean {
   const fields: FieldKey[] = [
     'companyName', 'industry', 'address', 'tin', 'numberOfEmployees',
-    'contactPerson', 'contactPhone', 'email'
+    'contactPerson', 'contactPhone', 'userName', 'email'
   ]
   if (form.industry === 'Other') fields.splice(2, 0, 'otherIndustry')
   fields.forEach(f => { touched[f] = true; validateField(f) })
@@ -516,30 +520,46 @@ function formatDate(ts: number) {
                   />
                   <span v-if="touched.contactPerson && fieldErrors.contactPerson" class="ap-field-error">{{ fieldErrors.contactPerson }}</span>
                 </div>
-                <div class="ap-field-row">
-                  <div class="ap-field">
-                    <label class="ap-label">Phone <span class="ap-req">*</span></label>
-                    <input
-                      v-model="form.contactPhone"
-                      :class="['ap-input', { 'ap-input--error': touched.contactPhone && fieldErrors.contactPhone }]"
-                      placeholder="+63 917 123 4567"
-                      @blur="touchAndValidate('contactPhone')"
-                      @input="touched.contactPhone && validateField('contactPhone')"
-                    />
-                    <span v-if="touched.contactPhone && fieldErrors.contactPhone" class="ap-field-error">{{ fieldErrors.contactPhone }}</span>
-                  </div>
-                  <div class="ap-field">
-                    <label class="ap-label">Work Email <span class="ap-req">*</span></label>
-                    <input
-                      v-model="form.email"
-                      type="email"
-                      :class="['ap-input', { 'ap-input--error': touched.email && fieldErrors.email }]"
-                      placeholder="you@company.com"
-                      @blur="touchAndValidate('email')"
-                      @input="touched.email && validateField('email')"
-                    />
-                    <span v-if="touched.email && fieldErrors.email" class="ap-field-error">{{ fieldErrors.email }}</span>
-                  </div>
+                <div class="ap-field">
+                  <label class="ap-label">Phone <span class="ap-req">*</span></label>
+                  <input
+                    v-model="form.contactPhone"
+                    :class="['ap-input', { 'ap-input--error': touched.contactPhone && fieldErrors.contactPhone }]"
+                    placeholder="+63 917 123 4567"
+                    @blur="touchAndValidate('contactPhone')"
+                    @input="touched.contactPhone && validateField('contactPhone')"
+                  />
+                  <span v-if="touched.contactPhone && fieldErrors.contactPhone" class="ap-field-error">{{ fieldErrors.contactPhone }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group 3: User -->
+            <div class="ap-group">
+              <div class="ap-group-label">User</div>
+              <div class="ap-group-fields">
+                <div class="ap-field">
+                  <label class="ap-label">Full Name <span class="ap-req">*</span></label>
+                  <input
+                    v-model="form.userName"
+                    :class="['ap-input', { 'ap-input--error': touched.userName && fieldErrors.userName }]"
+                    placeholder="Your full name"
+                    @blur="touchAndValidate('userName')"
+                    @input="touched.userName && validateField('userName')"
+                  />
+                  <span v-if="touched.userName && fieldErrors.userName" class="ap-field-error">{{ fieldErrors.userName }}</span>
+                </div>
+                <div class="ap-field">
+                  <label class="ap-label">Work Email <span class="ap-req">*</span></label>
+                  <input
+                    v-model="form.email"
+                    type="email"
+                    :class="['ap-input', { 'ap-input--error': touched.email && fieldErrors.email }]"
+                    placeholder="you@company.com"
+                    @blur="touchAndValidate('email')"
+                    @input="touched.email && validateField('email')"
+                  />
+                  <span v-if="touched.email && fieldErrors.email" class="ap-field-error">{{ fieldErrors.email }}</span>
                 </div>
               </div>
             </div>
