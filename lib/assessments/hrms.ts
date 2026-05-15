@@ -32,16 +32,6 @@ export const hrmsConfig: AssessmentConfig = {
       codealiveSearchHints: ['org chart', 'departments', 'hierarchy', 'reporting lines', 'locations']
     },
     {
-      name: 'Attendance and Scheduling',
-      requiredQuestions: [
-        'Do you track employee attendance or time-in/time-out?',
-        'Do you use shift scheduling?',
-        'How do you handle flexible work arrangements?',
-        'Do you integrate with biometric or access control systems?'
-      ],
-      codealiveSearchHints: ['attendance tracking', 'shift scheduling', 'flexible work', 'biometric integration']
-    },
-    {
       name: 'Document Management',
       requiredQuestions: [
         'What types of HR documents do you manage (contracts, certificates, etc.)?',
