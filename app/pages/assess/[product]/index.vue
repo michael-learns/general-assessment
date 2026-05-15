@@ -35,6 +35,8 @@ const form = reactive({
   tin: '',
   numberOfEmployees: undefined as number | undefined,
   contactPerson: '',
+  contactPhone: '',
+  contactEmail: '',
   // User
   userName: (query.name as string) || '',
   email: (query.email as string) || '',
@@ -59,7 +61,7 @@ const loading = ref(false)
 const submitError = ref('')
 
 type FieldKey = 'companyName' | 'industry' | 'otherIndustry' | 'address' | 'tin' |
-  'numberOfEmployees' | 'contactPerson' | 'userName' | 'email'
+  'numberOfEmployees' | 'contactPerson' | 'contactPhone' | 'contactEmail' | 'userName' | 'email'
 
 const fieldErrors = reactive<Partial<Record<FieldKey, string>>>({})
 const touched = reactive<Partial<Record<FieldKey, boolean>>>({})
@@ -100,6 +102,16 @@ function validateField(field: FieldKey) {
     case 'contactPerson':
       fieldErrors.contactPerson = str ? '' : 'Contact person name is required.'
       break
+    case 'contactPhone':
+      if (!str) fieldErrors.contactPhone = 'Phone number is required.'
+      else if (!PHONE_RE.test(str)) fieldErrors.contactPhone = 'Enter a valid phone number.'
+      else fieldErrors.contactPhone = ''
+      break
+    case 'contactEmail':
+      if (!str) fieldErrors.contactEmail = 'Email is required.'
+      else if (!EMAIL_RE.test(str)) fieldErrors.contactEmail = 'Enter a valid email address.'
+      else fieldErrors.contactEmail = ''
+      break
     case 'email':
       if (!str) fieldErrors.email = 'Work email is required.'
       else if (!EMAIL_RE.test(str)) fieldErrors.email = 'Enter a valid email address.'
@@ -116,7 +128,7 @@ function touchAndValidate(field: FieldKey) {
 function validateAll(): boolean {
   const fields: FieldKey[] = [
     'companyName', 'industry', 'address', 'tin', 'numberOfEmployees',
-    'userName', 'email', 'contactPerson'
+    'userName', 'email', 'contactPerson', 'contactPhone', 'contactEmail'
   ]
   if (form.industry === 'Other') fields.splice(2, 0, 'otherIndustry')
   fields.forEach(f => { touched[f] = true; validateField(f) })
@@ -543,6 +555,29 @@ function formatDate(ts: number) {
                     @input="touched.contactPerson && validateField('contactPerson')"
                   />
                   <span v-if="touched.contactPerson && fieldErrors.contactPerson" class="ap-field-error">{{ fieldErrors.contactPerson }}</span>
+                </div>
+                <div class="ap-field">
+                  <label class="ap-label">Phone <span class="ap-req">*</span></label>
+                  <input
+                    v-model="form.contactPhone"
+                    :class="['ap-input', { 'ap-input--error': touched.contactPhone && fieldErrors.contactPhone }]"
+                    placeholder="+63 917 123 4567"
+                    @blur="touchAndValidate('contactPhone')"
+                    @input="touched.contactPhone && validateField('contactPhone')"
+                  />
+                  <span v-if="touched.contactPhone && fieldErrors.contactPhone" class="ap-field-error">{{ fieldErrors.contactPhone }}</span>
+                </div>
+                <div class="ap-field">
+                  <label class="ap-label">Work Email <span class="ap-req">*</span></label>
+                  <input
+                    v-model="form.contactEmail"
+                    type="email"
+                    :class="['ap-input', { 'ap-input--error': touched.contactEmail && fieldErrors.contactEmail }]"
+                    placeholder="hr@company.com"
+                    @blur="touchAndValidate('contactEmail')"
+                    @input="touched.contactEmail && validateField('contactEmail')"
+                  />
+                  <span v-if="touched.contactEmail && fieldErrors.contactEmail" class="ap-field-error">{{ fieldErrors.contactEmail }}</span>
                 </div>
               </div>
             </div>

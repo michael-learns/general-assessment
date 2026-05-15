@@ -21,6 +21,8 @@ export default defineSchema({
     tin: v.optional(v.string()),
     numberOfEmployees: v.optional(v.number()),
     contactPerson: v.optional(v.string()),
+    contactPhone: v.optional(v.string()),
+    contactEmail: v.optional(v.string()),
     userName: v.optional(v.string()),
     // Scoping form data
     scopingData: v.optional(v.any()),
