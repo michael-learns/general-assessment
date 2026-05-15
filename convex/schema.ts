@@ -24,6 +24,10 @@ export default defineSchema({
     contactPhone: v.optional(v.string()),
     contactEmail: v.optional(v.string()),
     userName: v.optional(v.string()),
+    // Legacy fields retained for existing documents
+    authorizedSignatory: v.optional(v.string()),
+    signatoryPosition: v.optional(v.string()),
+    contactPosition: v.optional(v.string()),
     // Scoping form data
     scopingData: v.optional(v.any()),
     scopingCompleted: v.optional(v.boolean()),
