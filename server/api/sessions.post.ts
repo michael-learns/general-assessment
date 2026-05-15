@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
     const loopsEmail = body.email?.trim() || 'noemail@test.com'
     console.log('[loops] attempting upsert for:', loopsEmail, '| key present:', !!config.loopsApiKey)
     try {
-      const loopsRes = await $fetch<any>('https://app.loops.so/api/v1/contacts/upsert', {
+      const loopsRes = await $fetch<any>('https://app.loops.so/api/v1/contacts/create', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${config.loopsApiKey || 'missing'}`,
