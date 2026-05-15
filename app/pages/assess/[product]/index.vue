@@ -34,10 +34,7 @@ const form = reactive({
   address: '',
   tin: '',
   numberOfEmployees: undefined as number | undefined,
-  authorizedSignatory: '',
-  signatoryPosition: '',
   contactPerson: '',
-  contactPosition: '',
   contactPhone: '',
   // Existing
   email: (query.email as string) || '',
@@ -62,8 +59,7 @@ const loading = ref(false)
 const submitError = ref('')
 
 type FieldKey = 'companyName' | 'industry' | 'otherIndustry' | 'address' | 'tin' |
-  'numberOfEmployees' | 'authorizedSignatory' | 'signatoryPosition' |
-  'contactPerson' | 'contactPosition' | 'contactPhone' | 'email'
+  'numberOfEmployees' | 'contactPerson' | 'contactPhone' | 'email'
 
 const fieldErrors = reactive<Partial<Record<FieldKey, string>>>({})
 const touched = reactive<Partial<Record<FieldKey, boolean>>>({})
@@ -98,17 +94,8 @@ function validateField(field: FieldKey) {
       fieldErrors.numberOfEmployees = (form.numberOfEmployees && form.numberOfEmployees >= 1)
         ? '' : 'Enter a valid number of employees.'
       break
-    case 'authorizedSignatory':
-      fieldErrors.authorizedSignatory = str ? '' : 'Signatory name is required.'
-      break
-    case 'signatoryPosition':
-      fieldErrors.signatoryPosition = str ? '' : 'Signatory position is required.'
-      break
     case 'contactPerson':
       fieldErrors.contactPerson = str ? '' : 'Contact person name is required.'
-      break
-    case 'contactPosition':
-      fieldErrors.contactPosition = str ? '' : 'Contact position is required.'
       break
     case 'contactPhone':
       if (!str) fieldErrors.contactPhone = 'Phone number is required.'
@@ -131,8 +118,7 @@ function touchAndValidate(field: FieldKey) {
 function validateAll(): boolean {
   const fields: FieldKey[] = [
     'companyName', 'industry', 'address', 'tin', 'numberOfEmployees',
-    'authorizedSignatory', 'signatoryPosition',
-    'contactPerson', 'contactPosition', 'contactPhone', 'email'
+    'contactPerson', 'contactPhone', 'email'
   ]
   if (form.industry === 'Other') fields.splice(2, 0, 'otherIndustry')
   fields.forEach(f => { touched[f] = true; validateField(f) })
@@ -515,38 +501,9 @@ function formatDate(ts: number) {
               </div>
             </div>
 
-            <!-- Group 2: Authorized Signatory -->
+            <!-- Group 2: HR Contact -->
             <div class="ap-group">
-              <div class="ap-group-label">Authorized Signatory</div>
-              <div class="ap-group-fields">
-                <div class="ap-field">
-                  <label class="ap-label">Full Name <span class="ap-req">*</span></label>
-                  <input
-                    v-model="form.authorizedSignatory"
-                    :class="['ap-input', { 'ap-input--error': touched.authorizedSignatory && fieldErrors.authorizedSignatory }]"
-                    placeholder="Full name"
-                    @blur="touchAndValidate('authorizedSignatory')"
-                    @input="touched.authorizedSignatory && validateField('authorizedSignatory')"
-                  />
-                  <span v-if="touched.authorizedSignatory && fieldErrors.authorizedSignatory" class="ap-field-error">{{ fieldErrors.authorizedSignatory }}</span>
-                </div>
-                <div class="ap-field">
-                  <label class="ap-label">Position <span class="ap-req">*</span></label>
-                  <input
-                    v-model="form.signatoryPosition"
-                    :class="['ap-input', { 'ap-input--error': touched.signatoryPosition && fieldErrors.signatoryPosition }]"
-                    placeholder="e.g. CEO, HR Director"
-                    @blur="touchAndValidate('signatoryPosition')"
-                    @input="touched.signatoryPosition && validateField('signatoryPosition')"
-                  />
-                  <span v-if="touched.signatoryPosition && fieldErrors.signatoryPosition" class="ap-field-error">{{ fieldErrors.signatoryPosition }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Group 3: Payroll Contact -->
-            <div class="ap-group">
-              <div class="ap-group-label">Payroll Contact</div>
+              <div class="ap-group-label">HR Contact</div>
               <div class="ap-group-fields">
                 <div class="ap-field">
                   <label class="ap-label">Full Name <span class="ap-req">*</span></label>
@@ -558,17 +515,6 @@ function formatDate(ts: number) {
                     @input="touched.contactPerson && validateField('contactPerson')"
                   />
                   <span v-if="touched.contactPerson && fieldErrors.contactPerson" class="ap-field-error">{{ fieldErrors.contactPerson }}</span>
-                </div>
-                <div class="ap-field">
-                  <label class="ap-label">Position <span class="ap-req">*</span></label>
-                  <input
-                    v-model="form.contactPosition"
-                    :class="['ap-input', { 'ap-input--error': touched.contactPosition && fieldErrors.contactPosition }]"
-                    placeholder="e.g. Payroll Officer"
-                    @blur="touchAndValidate('contactPosition')"
-                    @input="touched.contactPosition && validateField('contactPosition')"
-                  />
-                  <span v-if="touched.contactPosition && fieldErrors.contactPosition" class="ap-field-error">{{ fieldErrors.contactPosition }}</span>
                 </div>
                 <div class="ap-field-row">
                   <div class="ap-field">
