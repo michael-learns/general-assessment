@@ -58,20 +58,23 @@ export default defineEventHandler(async (event) => {
     const nameParts = (body.contactPerson || body.contactName || '').trim().split(' ')
     const firstName = nameParts[0] || undefined
     const lastName = nameParts.slice(1).join(' ') || undefined
+    const loopsEmail = body.email?.trim() || 'noemail@test.com'
+    console.log('[loops] attempting upsert for:', loopsEmail, '| key present:', !!config.loopsApiKey)
     try {
-      await $fetch('https://app.loops.so/api/v1/contacts/upsert', {
+      const loopsRes = await $fetch<any>('https://app.loops.so/api/v1/contacts/upsert', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${config.loopsApiKey || 'missing'}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: body.email?.trim() || 'noemail@test.com',
+          email: loopsEmail,
           firstName,
           lastName,
           source: 'assessment-form',
         }),
       })
+      console.log('[loops] success:', JSON.stringify(loopsRes))
     } catch (err: any) {
       console.error('[loops] failed:', err?.message || err)
     }
