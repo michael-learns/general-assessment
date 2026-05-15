@@ -16,7 +16,6 @@ export default defineEventHandler(async (event) => {
     tin?: string
     numberOfEmployees?: number
     contactPerson?: string
-    contactPhone?: string
     userName?: string
   }>(event)
 
@@ -47,7 +46,6 @@ export default defineEventHandler(async (event) => {
       tin: body.tin?.trim() || undefined,
       numberOfEmployees: body.numberOfEmployees || undefined,
       contactPerson: body.contactPerson?.trim() || undefined,
-      contactPhone: body.contactPhone?.trim() || undefined,
       userName: body.userName?.trim() || undefined,
     })
     // Sync contact to Loops.so (always attempt so we can see it in Vercel External APIs)
