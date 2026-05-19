@@ -59,7 +59,11 @@ export default defineEventHandler(async (event) => {
     const loopsEmail = body.email?.trim() || 'noemail@test.com'
     console.log('[loops] attempting upsert for:', loopsEmail, '| key present:', !!config.loopsApiKey)
     try {
-      const loopsRes = await $fetch<any>('https://app.loops.so/api/v1/contacts/create', {
+      const productSlug = body.product?.trim() || 'payroll'
+    const source = productSlug === 'hrms'
+      ? 'HRIS Fit Assessment'
+      : 'Payroll Fit Assessment'
+    const loopsRes = await $fetch<any>('https://app.loops.so/api/v1/contacts/create', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${config.loopsApiKey || 'missing'}`,
@@ -69,7 +73,7 @@ export default defineEventHandler(async (event) => {
           email: loopsEmail,
           firstName,
           lastName,
-          source: 'assessment-form',
+          source,
         }),
       })
       console.log('[loops] success:', JSON.stringify(loopsRes))

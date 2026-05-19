@@ -21,8 +21,10 @@
   "dependencies": {
     "@google/genai": "^1.52.0",
     "@nuxt/ui": "^4.4.0",
-    "convex": "^1.32.0",
+    "convex": "^1.38.0",
+    "deploy": "^1.1.0",
     "marked": "^17.0.5",
+    "npx": "^10.2.2",
     "nuxt": "^4.3.1",
     "vue": "^3.5.28",
     "vue-router": "^4.6.4"
